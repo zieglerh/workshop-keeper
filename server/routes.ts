@@ -1,7 +1,8 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+import { setupAuth, isAuthenticated as replitAuth } from "./replitAuth";
+import { setupLocalAuth, isAuthenticated as localAuth } from "./localAuth";
 import {
   insertCategorySchema,
   insertInventoryItemSchema,
@@ -10,11 +11,21 @@ import {
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Auth middleware
-  await setupAuth(app);
+  // Auth middleware - use local auth for Docker environment
+  const isLocalDevelopment = process.env.NODE_ENV === 'production' && 
+    process.env.DATABASE_URL?.includes('localhost') || 
+    process.env.DATABASE_URL?.includes('db:5432');
+  
+  if (isLocalDevelopment) {
+    await setupLocalAuth(app);
+  } else {
+    await setupAuth(app);
+  }
+
+  const authMiddleware = isLocalDevelopment ? localAuth : replitAuth;
 
   // Auth routes
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+  app.get('/api/auth/user', authMiddleware, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
@@ -26,7 +37,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // User management routes (admin only)
-  app.get("/api/users", isAuthenticated, async (req: any, res) => {
+  app.get("/api/users", authMiddleware, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
       if (currentUser?.role !== 'admin') {
@@ -41,7 +52,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/users/:id/role", isAuthenticated, async (req: any, res) => {
+  app.patch("/api/users/:id/role", authMiddleware, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
       if (currentUser?.role !== 'admin') {
@@ -62,7 +73,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Category routes
-  app.get("/api/categories", isAuthenticated, async (req, res) => {
+  app.get("/api/categories", authMiddleware, async (req, res) => {
     try {
       const categories = await storage.getAllCategories();
       res.json(categories);
@@ -72,7 +83,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/categories", isAuthenticated, async (req: any, res) => {
+  app.post("/api/categories", authMiddleware, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
       if (currentUser?.role !== 'admin') {
@@ -91,7 +102,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/categories/:id", isAuthenticated, async (req: any, res) => {
+  app.patch("/api/categories/:id", authMiddleware, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
       if (currentUser?.role !== 'admin') {
@@ -110,7 +121,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/categories/:id", isAuthenticated, async (req: any, res) => {
+  app.delete("/api/categories/:id", authMiddleware, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
       if (currentUser?.role !== 'admin') {
@@ -126,7 +137,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Inventory routes
-  app.get("/api/inventory", isAuthenticated, async (req, res) => {
+  app.get("/api/inventory", authMiddleware, async (req, res) => {
     try {
       const items = await storage.getAllInventoryItems();
       res.json(items);
@@ -136,7 +147,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/inventory/:id", isAuthenticated, async (req, res) => {
+  app.get("/api/inventory/:id", authMiddleware, async (req, res) => {
     try {
       const item = await storage.getInventoryItem(req.params.id);
       if (!item) {
@@ -149,7 +160,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/inventory", isAuthenticated, async (req: any, res) => {
+  app.post("/api/inventory", authMiddleware, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
       if (currentUser?.role !== 'admin') {
@@ -168,7 +179,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/inventory/:id", isAuthenticated, async (req: any, res) => {
+  app.patch("/api/inventory/:id", authMiddleware, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
       if (currentUser?.role !== 'admin') {
@@ -187,7 +198,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/inventory/:id", isAuthenticated, async (req: any, res) => {
+  app.delete("/api/inventory/:id", authMiddleware, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
       if (currentUser?.role !== 'admin') {
@@ -203,7 +214,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Borrowing routes
-  app.post("/api/inventory/:id/borrow", isAuthenticated, async (req: any, res) => {
+  app.post("/api/inventory/:id/borrow", authMiddleware, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const itemId = req.params.id;
@@ -225,7 +236,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/inventory/:id/return", isAuthenticated, async (req: any, res) => {
+  app.post("/api/inventory/:id/return", authMiddleware, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
       const itemId = req.params.id;
@@ -248,7 +259,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/borrowing-history", isAuthenticated, async (req: any, res) => {
+  app.get("/api/borrowing-history", authMiddleware, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
       let history;
@@ -267,7 +278,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Purchase routes
-  app.post("/api/inventory/:id/purchase", isAuthenticated, async (req: any, res) => {
+  app.post("/api/inventory/:id/purchase", authMiddleware, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const itemId = req.params.id;
@@ -309,7 +320,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/purchases", isAuthenticated, async (req: any, res) => {
+  app.get("/api/purchases", authMiddleware, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
       let purchases;
@@ -328,7 +339,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Statistics route
-  app.get("/api/stats", isAuthenticated, async (req, res) => {
+  app.get("/api/stats", authMiddleware, async (req, res) => {
     try {
       const stats = await storage.getStats();
       res.json(stats);
