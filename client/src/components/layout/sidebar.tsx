@@ -1,14 +1,15 @@
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
+import { Home, Package, Tags, RefreshCw, ShoppingCart, Users, Wrench } from "lucide-react";
 
 const navigation = [
-  { name: "Dashboard", href: "/", icon: "fas fa-home" },
-  { name: "Inventory", href: "/inventory", icon: "fas fa-boxes" },
-  { name: "Categories", href: "/categories", icon: "fas fa-tags", adminOnly: true },
-  { name: "Borrowing", href: "/borrowing", icon: "fas fa-exchange-alt" },
-  { name: "Sales", href: "/sales", icon: "fas fa-shopping-cart" },
-  { name: "Users", href: "/users", icon: "fas fa-users", adminOnly: true },
+  { name: "Dashboard", href: "/", icon: Home },
+  { name: "Inventory", href: "/inventory", icon: Package },
+  { name: "Categories", href: "/categories", icon: Tags, adminOnly: true },
+  { name: "Borrowing", href: "/borrowing", icon: RefreshCw },
+  { name: "Sales", href: "/sales", icon: ShoppingCart },
+  { name: "Users", href: "/users", icon: Users, adminOnly: true },
 ];
 
 export default function Sidebar() {
@@ -24,7 +25,7 @@ export default function Sidebar() {
       <div className="p-6 border-b border-gray-200">
         <div className="flex items-center space-x-3">
           <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-            <i className="fas fa-tools text-white text-sm"></i>
+            <Wrench className="h-4 w-4 text-white" />
           </div>
           <div>
             <h1 className="text-xl font-semibold text-gray-900">WorkshopTracker</h1>
@@ -45,7 +46,7 @@ export default function Sidebar() {
                 : "text-gray-700 hover:bg-gray-100"
             )}
           >
-            <i className={`${item.icon} w-5`}></i>
+            <item.icon className="h-5 w-5" />
             <span>{item.name}</span>
           </button>
         ))}

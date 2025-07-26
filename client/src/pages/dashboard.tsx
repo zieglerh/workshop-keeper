@@ -9,6 +9,7 @@ import StatsWidget from "@/components/stats/stats-widget";
 import ItemCard from "@/components/inventory/item-card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Filter, ShoppingBag } from "lucide-react";
 import { useState } from "react";
 import AddItemModal from "@/components/inventory/add-item-modal";
 import type { InventoryItemWithRelations, Category } from "@shared/schema";
@@ -109,7 +110,7 @@ export default function Dashboard() {
                   onClick={() => setShowAvailableOnly(!showAvailableOnly)}
                   className="flex items-center space-x-2"
                 >
-                  <i className="fas fa-filter"></i>
+                  <Filter className="h-4 w-4" />
                   <span>Available</span>
                 </Button>
                 <Button
@@ -117,7 +118,7 @@ export default function Dashboard() {
                   onClick={() => setShowPurchasableOnly(!showPurchasableOnly)}
                   className="flex items-center space-x-2"
                 >
-                  <i className="fas fa-shopping-tag"></i>
+                  <ShoppingBag className="h-4 w-4" />
                   <span>Purchasable</span>
                 </Button>
               </div>

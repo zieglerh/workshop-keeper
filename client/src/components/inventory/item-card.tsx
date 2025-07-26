@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { ShoppingCart, HandIcon, RotateCcw, Edit, Trash2, ImageIcon } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -180,7 +181,7 @@ export default function ItemCard({ item, userRole }: ItemCardProps) {
           />
         ) : (
           <div className="w-full h-48 bg-gray-200 flex items-center justify-center">
-            <i className="fas fa-image text-4xl text-gray-400"></i>
+            <ImageIcon className="h-12 w-12 text-gray-400" />
           </div>
         )}
         
@@ -266,9 +267,10 @@ export default function ItemCard({ item, userRole }: ItemCardProps) {
                   size="sm"
                   onClick={handlePurchase}
                   disabled={purchaseMutation.isPending}
-                  className="flex-1 bg-success hover:bg-success/90 text-white text-xs"
+                  className="flex-1 bg-success hover:bg-success/90 text-white text-xs flex items-center space-x-1"
                 >
-                  Buy €{(parseFloat(item.pricePerUnit || '0') * purchaseQuantity).toFixed(2)}
+                  <ShoppingCart className="h-3 w-3" />
+                  <span>€{(parseFloat(item.pricePerUnit || '0') * purchaseQuantity).toFixed(2)}</span>
                 </Button>
               </div>
             ) : item.isAvailable ? (
@@ -276,9 +278,10 @@ export default function ItemCard({ item, userRole }: ItemCardProps) {
                 size="sm"
                 onClick={() => borrowMutation.mutate()}
                 disabled={borrowMutation.isPending}
-                className="flex-1 bg-primary hover:bg-primary-dark text-white"
+                className="flex-1 bg-primary hover:bg-primary-dark text-white flex items-center space-x-2"
               >
-                Borrow
+                <HandIcon className="h-4 w-4" />
+                <span>Borrow</span>
               </Button>
             ) : (
               <Button
@@ -286,9 +289,10 @@ export default function ItemCard({ item, userRole }: ItemCardProps) {
                 onClick={() => returnMutation.mutate()}
                 disabled={returnMutation.isPending || !item.currentBorrowerId}
                 variant="outline"
-                className="flex-1"
+                className="flex-1 flex items-center space-x-2"
               >
-                Return
+                <RotateCcw className="h-4 w-4" />
+                <span>Return</span>
               </Button>
             )}
             
@@ -299,7 +303,7 @@ export default function ItemCard({ item, userRole }: ItemCardProps) {
                   variant="outline"
                   onClick={() => setShowEditModal(true)}
                 >
-                  <i className="fas fa-edit"></i>
+                  <Edit className="h-4 w-4" />
                 </Button>
                 <Button
                   size="sm"
@@ -308,7 +312,7 @@ export default function ItemCard({ item, userRole }: ItemCardProps) {
                   disabled={deleteMutation.isPending}
                   className="text-red-600 hover:text-red-700"
                 >
-                  <i className="fas fa-trash"></i>
+                  <Trash2 className="h-4 w-4" />
                 </Button>
               </>
             )}
