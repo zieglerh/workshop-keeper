@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Plus, Search } from "lucide-react";
 
 interface HeaderProps {
   title: string;
@@ -41,7 +42,7 @@ export default function Header({
                 onChange={(e) => onSearchChange?.(e.target.value)}
                 className="w-80 pl-10"
               />
-              <i className="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
             </div>
           )}
           {showAddButton && (
@@ -49,7 +50,7 @@ export default function Header({
               onClick={onAddClick}
               className="bg-primary hover:bg-primary-dark text-white flex items-center space-x-2"
             >
-              <i className="fas fa-plus"></i>
+              <Plus className="h-4 w-4" />
               <span>{addButtonText}</span>
             </Button>
           )}
