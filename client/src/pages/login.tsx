@@ -114,8 +114,18 @@ export default function Login() {
             </Button>
           </form>
 
-          <div className="mt-6 text-center text-sm text-muted-foreground">
-            <p className="mb-2">Standard-Anmeldedaten:</p>
+          <div className="mt-6 text-center">
+            <Button
+              variant="link"
+              onClick={() => setLocation('/register')}
+              disabled={isLoading}
+            >
+              Noch kein Konto? Registrieren
+            </Button>
+          </div>
+
+          <div className="mt-4 text-center text-sm text-muted-foreground">
+            <p className="mb-2">Standard-Admin-Anmeldung:</p>
             <p><strong>Benutzername:</strong> admin</p>
             <p><strong>Passwort:</strong> admin123</p>
           </div>

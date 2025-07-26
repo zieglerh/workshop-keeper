@@ -30,6 +30,7 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   upsertUser(user: UpsertUser): Promise<User>;
   getAllUsers(): Promise<User[]>;
+  getPendingUsers(): Promise<User[]>;
   updateUserRole(id: string, role: string): Promise<User>;
 
   // Category operations
@@ -127,6 +128,10 @@ export class DatabaseStorage implements IStorage {
 
   async getAllUsers(): Promise<User[]> {
     return await db.select().from(users).orderBy(desc(users.createdAt));
+  }
+
+  async getPendingUsers(): Promise<User[]> {
+    return await db.select().from(users).where(eq(users.role, 'pending')).orderBy(desc(users.createdAt));
   }
 
   async updateUserRole(id: string, role: string): Promise<User> {

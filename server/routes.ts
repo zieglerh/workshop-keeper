@@ -45,19 +45,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const currentUser = await storage.getUser(req.user.id);
       if (currentUser?.role !== 'admin') {
-        return res.status(403).json({ message: "Admin access required" });
+        return res.status(403).json({ message: "Admin-Zugriff erforderlich" });
       }
 
       const { role } = req.body;
-      if (!role || !['admin', 'user'].includes(role)) {
-        return res.status(400).json({ message: "Invalid role" });
+      if (!role || !['admin', 'user', 'pending'].includes(role)) {
+        return res.status(400).json({ message: "Ungültige Rolle" });
       }
 
       const updatedUser = await storage.updateUserRole(req.params.id, role);
       res.json(updatedUser);
     } catch (error) {
       console.error("Error updating user role:", error);
-      res.status(500).json({ message: "Failed to update user role" });
+      res.status(500).json({ message: "Fehler beim Aktualisieren der Benutzerrolle" });
+    }
+  });
+
+  // Get pending users (admin only)
+  app.get("/api/users/pending", isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.id);
+      if (currentUser?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin-Zugriff erforderlich" });
+      }
+      
+      const pendingUsers = await storage.getPendingUsers();
+      res.json(pendingUsers);
+    } catch (error) {
+      console.error("Error fetching pending users:", error);
+      res.status(500).json({ message: "Fehler beim Abrufen wartender Benutzer" });
     }
   });
 

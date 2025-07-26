@@ -2,7 +2,7 @@
 
 ## Overview
 
-WorkshopTracker is a professional inventory management system designed for workshops. It provides comprehensive tools for managing tools, equipment, categories, user access, and tracking borrowing/sales activities. The application follows a full-stack architecture with a React frontend, Express.js backend, and PostgreSQL database using Drizzle ORM.
+WorkshopTracker is a professional inventory management system designed for workshops with German language interface. It provides comprehensive tools for managing tools, equipment, categories, user access, and tracking borrowing/sales activities. The application features username/password authentication with admin approval for new registrations, replacing the previous OAuth system. The application follows a full-stack architecture with a React frontend, Express.js backend, and PostgreSQL database using Drizzle ORM.
 
 ## User Preferences
 
@@ -38,9 +38,11 @@ The application uses PostgreSQL with the following core entities:
 ## Key Components
 
 ### Authentication & Authorization
-- **Replit Auth Integration**: Secure OAuth flow with session management
+- **Username/Password Authentication**: Secure login system with bcrypt password hashing
+- **Admin Approval System**: New user registrations require admin activation (pending role)
 - **Role-Based Access**: Admin users can manage categories and users, regular users can browse and borrow
 - **Session Security**: Secure cookies with PostgreSQL session storage
+- **Default Admin**: System creates admin/admin123 credentials on initialization
 
 ### Inventory Management
 - **Item Tracking**: Comprehensive item information including location, purchase date, and images
@@ -72,8 +74,8 @@ The application uses PostgreSQL with the following core entities:
 - **tailwindcss**: Utility-first CSS framework
 
 ### Authentication
-- **openid-client**: OpenID Connect implementation for Replit Auth
-- **passport**: Authentication middleware
+- **bcrypt**: Password hashing for secure credential storage
+- **express-session**: Session management middleware
 - **connect-pg-simple**: PostgreSQL session store
 
 ### Development Tools
@@ -94,12 +96,21 @@ The application uses PostgreSQL with the following core entities:
 - **Environment Variables**: 
   - `DATABASE_URL`: PostgreSQL connection string
   - `SESSION_SECRET`: Session encryption key
-  - `REPL_ID`: Replit environment identifier
-  - `ISSUER_URL`: OAuth issuer URL (defaults to Replit)
 
 ### Database Setup
 - **Migrations**: Uses Drizzle Kit for schema management
 - **Schema Location**: Database schema defined in `shared/schema.ts`
 - **Push Command**: `npm run db:push` applies schema changes
 
-The application is designed to run efficiently on Replit's infrastructure with automatic environment provisioning and secure authentication integration.
+## Recent Changes
+
+### January 2025 - Authentication System Overhaul
+- **OAuth Removal**: Completely removed Replit OAuth authentication system
+- **Username/Password Implementation**: Created traditional login/registration system
+- **German Language Interface**: All authentication pages now use German language
+- **Admin Approval Workflow**: New registrations create 'pending' users requiring admin activation
+- **User Management**: Enhanced admin interface with tabs for pending and active users
+- **Default Admin Account**: System automatically creates admin/admin123 for initial access
+- **Session Management**: Maintained existing PostgreSQL session storage
+
+The application is designed to run efficiently on Replit's infrastructure with secure username/password authentication and admin-controlled user registration.

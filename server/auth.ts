@@ -49,6 +49,11 @@ export async function setupAuth(app: Express) {
         return res.status(401).json({ message: "Ungültiger Benutzername oder Passwort" });
       }
 
+      // Check if user is pending approval
+      if (user.role === 'pending') {
+        return res.status(403).json({ message: "Ihr Konto wartet noch auf Admin-Freischaltung" });
+      }
+
       // Set session
       (req.session as any).user = {
         id: user.id,
@@ -87,15 +92,10 @@ export async function setupAuth(app: Express) {
     });
   });
 
-  // Register endpoint (only for admins to create new users)
-  app.post("/api/register", isAuthenticated, async (req, res) => {
+  // Public registration endpoint (creates inactive users)
+  app.post("/api/register", async (req, res) => {
     try {
-      const currentUser = (req.session as any).user;
-      if (currentUser.role !== 'admin') {
-        return res.status(403).json({ message: "Nur Administratoren können neue Benutzer erstellen" });
-      }
-
-      const { username, password, email, firstName, lastName, role = 'user' } = req.body;
+      const { username, password, email, firstName, lastName } = req.body;
       
       if (!username || !password) {
         return res.status(400).json({ message: "Benutzername und Passwort sind erforderlich" });
@@ -110,23 +110,23 @@ export async function setupAuth(app: Express) {
       // Hash password
       const passwordHash = await bcrypt.hash(password, 10);
 
-      // Create user
+      // Create inactive user (pending admin approval)
       const newUser = await storage.createUser({
         username,
         passwordHash,
         email: email || null,
         firstName: firstName || null,
         lastName: lastName || null,
-        role,
+        role: 'pending', // Special role for pending approval
       });
 
       res.json({ 
         success: true, 
+        message: "Registrierung erfolgreich. Warten auf Admin-Freischaltung.",
         user: {
           id: newUser.id,
           username: newUser.username,
           email: newUser.email,
-          role: newUser.role,
           firstName: newUser.firstName,
           lastName: newUser.lastName,
         }
@@ -134,6 +134,31 @@ export async function setupAuth(app: Express) {
     } catch (error) {
       console.error("Registration error:", error);
       res.status(500).json({ message: "Registrierung fehlgeschlagen" });
+    }
+  });
+
+  // Admin endpoint to approve/activate users
+  app.patch("/api/users/:id/activate", isAuthenticated, async (req, res) => {
+    try {
+      const currentUser = (req.session as any).user;
+      if (currentUser.role !== 'admin') {
+        return res.status(403).json({ message: "Nur Administratoren können Benutzer freischalten" });
+      }
+
+      const { role = 'user' } = req.body;
+      if (!['user', 'admin'].includes(role)) {
+        return res.status(400).json({ message: "Ungültige Rolle" });
+      }
+
+      const updatedUser = await storage.updateUserRole(req.params.id, role);
+      res.json({ 
+        success: true, 
+        user: updatedUser,
+        message: "Benutzer erfolgreich freigeschaltet" 
+      });
+    } catch (error) {
+      console.error("User activation error:", error);
+      res.status(500).json({ message: "Benutzer-Freischaltung fehlgeschlagen" });
     }
   });
 
