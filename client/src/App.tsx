@@ -12,6 +12,7 @@ import Inventory from "@/pages/inventory";
 import Categories from "@/pages/categories";
 import Borrowing from "@/pages/borrowing";
 import Sales from "@/pages/sales";
+import Profile from "@/pages/profile";
 import Users from "@/pages/users";
 
 function Router() {
@@ -40,6 +41,7 @@ function Router() {
           <Route path="/borrowing" component={Borrowing} />
           <Route path="/sales" component={Sales} />
           <Route path="/users" component={Users} />
+          <Route path="/profile" component={Profile} />
         </>
       )}
       <Route component={NotFound} />

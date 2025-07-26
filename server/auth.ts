@@ -162,6 +162,97 @@ export async function setupAuth(app: Express) {
     }
   });
 
+  // Profile endpoints
+  app.patch("/api/profile", isAuthenticated, async (req, res) => {
+    try {
+      const currentUser = (req.session as any).user;
+      const { firstName, lastName, email } = req.body;
+      
+      const updatedUser = await storage.updateUserProfile(currentUser.id, {
+        firstName: firstName || null,
+        lastName: lastName || null,
+        email: email || null,
+      });
+      
+      res.json({ 
+        success: true, 
+        user: updatedUser,
+        message: "Profil erfolgreich aktualisiert" 
+      });
+    } catch (error) {
+      console.error("Profile update error:", error);
+      res.status(500).json({ message: "Profil-Aktualisierung fehlgeschlagen" });
+    }
+  });
+
+  app.post("/api/change-password", isAuthenticated, async (req, res) => {
+    try {
+      const currentUser = (req.session as any).user;
+      const { currentPassword, newPassword } = req.body;
+      
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({ message: "Aktuelles und neues Passwort sind erforderlich" });
+      }
+
+      // Get full user data to verify current password
+      const user = await storage.getUser(currentUser.id);
+      if (!user) {
+        return res.status(404).json({ message: "Benutzer nicht gefunden" });
+      }
+
+      // Verify current password
+      const isValidPassword = await bcrypt.compare(currentPassword, user.passwordHash!);
+      if (!isValidPassword) {
+        return res.status(401).json({ message: "Aktuelles Passwort ist falsch" });
+      }
+
+      // Hash new password
+      const newPasswordHash = await bcrypt.hash(newPassword, 10);
+      
+      // Update password
+      await storage.updateUserPassword(currentUser.id, newPasswordHash);
+      
+      res.json({ 
+        success: true,
+        message: "Passwort erfolgreich geändert" 
+      });
+    } catch (error) {
+      console.error("Password change error:", error);
+      res.status(500).json({ message: "Passwort-Änderung fehlgeschlagen" });
+    }
+  });
+
+  app.delete("/api/profile", isAuthenticated, async (req, res) => {
+    try {
+      const currentUser = (req.session as any).user;
+      
+      // Don't allow deleting the last admin
+      if (currentUser.role === 'admin') {
+        const allAdmins = await storage.getUsersByRole('admin');
+        if (allAdmins.length <= 1) {
+          return res.status(400).json({ message: "Der letzte Administrator kann nicht gelöscht werden" });
+        }
+      }
+      
+      await storage.deleteUser(currentUser.id);
+      
+      // Destroy session
+      req.session.destroy((err) => {
+        if (err) {
+          console.error("Session destruction error:", err);
+        }
+      });
+      
+      res.json({ 
+        success: true,
+        message: "Konto erfolgreich gelöscht" 
+      });
+    } catch (error) {
+      console.error("Account deletion error:", error);
+      res.status(500).json({ message: "Konto-Löschung fehlgeschlagen" });
+    }
+  });
+
   // Create default admin user if none exists
   try {
     const adminUser = await storage.getUserByUsername('admin');

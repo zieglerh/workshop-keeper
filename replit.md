@@ -104,13 +104,17 @@ The application uses PostgreSQL with the following core entities:
 
 ## Recent Changes
 
-### January 2025 - Authentication System Overhaul
+### January 2025 - Authentication System Overhaul & Profile Management
 - **OAuth Removal**: Completely removed Replit OAuth authentication system
 - **Username/Password Implementation**: Created traditional login/registration system
 - **German Language Interface**: All authentication pages now use German language
 - **Admin Approval Workflow**: New registrations create 'pending' users requiring admin activation
 - **User Management**: Enhanced admin interface with tabs for pending and active users
+- **Profile Page**: Complete user profile management with password changes and account deletion
+- **Admin User Management**: Full CRUD operations for user management (edit, delete, role changes)
 - **Default Admin Account**: System automatically creates admin/admin123 for initial access
 - **Session Management**: Maintained existing PostgreSQL session storage
+- **UI Components**: Added AlertDialog component for confirmation dialogs
+- **Security**: Admin prevents deletion of last administrator and self-deletion
 
 The application is designed to run efficiently on Replit's infrastructure with secure username/password authentication and admin-controlled user registration.

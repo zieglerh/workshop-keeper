@@ -77,6 +77,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update user profile by admin
+  app.patch("/api/users/:id/profile", isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.id);
+      if (currentUser?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin-Zugriff erforderlich" });
+      }
+
+      const { firstName, lastName, email } = req.body;
+      
+      const updatedUser = await storage.updateUserProfile(req.params.id, {
+        firstName: firstName || null,
+        lastName: lastName || null,
+        email: email || null,
+      });
+      
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating user profile:", error);
+      res.status(500).json({ message: "Fehler beim Aktualisieren des Benutzerprofils" });
+    }
+  });
+
+  // Delete user by admin
+  app.delete("/api/users/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.id);
+      if (currentUser?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin-Zugriff erforderlich" });
+      }
+
+      const userToDelete = await storage.getUser(req.params.id);
+      if (!userToDelete) {
+        return res.status(404).json({ message: "Benutzer nicht gefunden" });
+      }
+
+      // Don't allow deleting the last admin
+      if (userToDelete.role === 'admin') {
+        const allAdmins = await storage.getUsersByRole('admin');
+        if (allAdmins.length <= 1) {
+          return res.status(400).json({ message: "Der letzte Administrator kann nicht gelöscht werden" });
+        }
+      }
+
+      // Don't allow deleting self
+      if (req.params.id === currentUser?.id) {
+        return res.status(400).json({ message: "Sie können sich nicht selbst löschen" });
+      }
+      
+      await storage.deleteUser(req.params.id);
+      res.json({ message: "Benutzer erfolgreich gelöscht" });
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      res.status(500).json({ message: "Fehler beim Löschen des Benutzers" });
+    }
+  });
+
   // Category routes
   app.get("/api/categories", isAuthenticated, async (req, res) => {
     try {

@@ -1,7 +1,7 @@
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
-import { Home, Package, Tags, RefreshCw, ShoppingCart, Users, Wrench } from "lucide-react";
+import { Home, Package, Tags, RefreshCw, ShoppingCart, Users, Wrench, User } from "lucide-react";
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: Home },
@@ -10,6 +10,7 @@ const navigation = [
   { name: "Borrowing", href: "/borrowing", icon: RefreshCw },
   { name: "Sales", href: "/sales", icon: ShoppingCart },
   { name: "Users", href: "/users", icon: Users, adminOnly: true },
+  { name: "Profil", href: "/profile", icon: User },
 ];
 
 export default function Sidebar() {

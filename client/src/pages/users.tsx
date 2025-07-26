@@ -11,7 +11,11 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Users as UsersIcon, Shield, User, Clock, UserCheck, UserX, LogOut } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Users as UsersIcon, Shield, User, Clock, UserCheck, UserX, LogOut, Edit, Trash2 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { User as UserType } from "@shared/schema";
 import { format } from "date-fns";
@@ -19,6 +23,12 @@ import { format } from "date-fns";
 export default function Users() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
+  const [editUser, setEditUser] = useState<UserType | null>(null);
+  const [editData, setEditData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+  });
 
   const handleLogout = async () => {
     try {
@@ -135,9 +145,74 @@ export default function Users() {
     },
   });
 
+  const editUserMutation = useMutation({
+    mutationFn: async ({ userId, data }: { userId: string; data: typeof editData }) => {
+      await apiRequest(`/api/users/${userId}/profile`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      setEditUser(null);
+      toast({
+        title: "Benutzer aktualisiert",
+        description: "Die Benutzerdaten wurden erfolgreich aktualisiert",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Fehler",
+        description: error.message || "Fehler beim Aktualisieren des Benutzers",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      await apiRequest(`/api/users/${userId}`, {
+        method: 'DELETE',
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users/pending"] });
+      toast({
+        title: "Benutzer gelöscht",
+        description: "Der Benutzer wurde erfolgreich gelöscht",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Fehler",
+        description: error.message || "Fehler beim Löschen des Benutzers",
+        variant: "destructive",
+      });
+    },
+  });
+
   if (isLoading || !isAuthenticated) {
     return null;
   }
+
+  const handleEditUser = (userToEdit: UserType) => {
+    setEditUser(userToEdit);
+    setEditData({
+      firstName: userToEdit.firstName || '',
+      lastName: userToEdit.lastName || '',
+      email: userToEdit.email || '',
+    });
+  };
+
+  const handleSaveEdit = () => {
+    if (editUser) {
+      editUserMutation.mutate({ userId: editUser.id, data: editData });
+    }
+  };
 
   if (user?.role !== 'admin') {
     return (
@@ -332,6 +407,67 @@ export default function Users() {
                           </div>
                           {activeUser.id !== user?.id && (
                             <div className="flex items-center space-x-2">
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleEditUser(activeUser)}
+                                  >
+                                    <Edit className="w-4 h-4 mr-1" />
+                                    Bearbeiten
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                  <DialogHeader>
+                                    <DialogTitle>Benutzer bearbeiten</DialogTitle>
+                                    <DialogDescription>
+                                      Ändern Sie die Benutzerdaten von @{editUser?.username}
+                                    </DialogDescription>
+                                  </DialogHeader>
+                                  <div className="space-y-4">
+                                    <div className="grid grid-cols-2 gap-4">
+                                      <div className="space-y-2">
+                                        <Label htmlFor="editFirstName">Vorname</Label>
+                                        <Input
+                                          id="editFirstName"
+                                          value={editData.firstName}
+                                          onChange={(e) => setEditData(prev => ({ ...prev, firstName: e.target.value }))}
+                                          placeholder="Vorname"
+                                        />
+                                      </div>
+                                      <div className="space-y-2">
+                                        <Label htmlFor="editLastName">Nachname</Label>
+                                        <Input
+                                          id="editLastName"
+                                          value={editData.lastName}
+                                          onChange={(e) => setEditData(prev => ({ ...prev, lastName: e.target.value }))}
+                                          placeholder="Nachname"
+                                        />
+                                      </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                      <Label htmlFor="editEmail">E-Mail</Label>
+                                      <Input
+                                        id="editEmail"
+                                        type="email"
+                                        value={editData.email}
+                                        onChange={(e) => setEditData(prev => ({ ...prev, email: e.target.value }))}
+                                        placeholder="E-Mail-Adresse"
+                                      />
+                                    </div>
+                                  </div>
+                                  <DialogFooter>
+                                    <Button
+                                      onClick={handleSaveEdit}
+                                      disabled={editUserMutation.isPending}
+                                    >
+                                      {editUserMutation.isPending ? 'Speichern...' : 'Speichern'}
+                                    </Button>
+                                  </DialogFooter>
+                                </DialogContent>
+                              </Dialog>
+
                               <Select
                                 defaultValue={activeUser.role!}
                                 onValueChange={(role) => updateRoleMutation.mutate({ userId: activeUser.id, role })}
@@ -345,6 +481,37 @@ export default function Users() {
                                   <SelectItem value="admin">Administrator</SelectItem>
                                 </SelectContent>
                               </Select>
+
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    size="sm"
+                                    variant="destructive"
+                                  >
+                                    <Trash2 className="w-4 h-4 mr-1" />
+                                    Löschen
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Benutzer löschen?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Sind Sie sicher, dass Sie den Benutzer "@{activeUser.username}" löschen möchten?
+                                      Diese Aktion kann nicht rückgängig gemacht werden.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => deleteUserMutation.mutate(activeUser.id)}
+                                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                      disabled={deleteUserMutation.isPending}
+                                    >
+                                      {deleteUserMutation.isPending ? 'Wird gelöscht...' : 'Ja, löschen'}
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
                             </div>
                           )}
                         </div>

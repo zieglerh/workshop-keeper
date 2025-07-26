@@ -31,7 +31,11 @@ export interface IStorage {
   upsertUser(user: UpsertUser): Promise<User>;
   getAllUsers(): Promise<User[]>;
   getPendingUsers(): Promise<User[]>;
+  getUsersByRole(role: string): Promise<User[]>;
   updateUserRole(id: string, role: string): Promise<User>;
+  updateUserProfile(id: string, profile: Partial<User>): Promise<User>;
+  updateUserPassword(id: string, passwordHash: string): Promise<void>;
+  deleteUser(id: string): Promise<void>;
 
   // Category operations
   getAllCategories(): Promise<Category[]>;
@@ -134,6 +138,10 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(users).where(eq(users.role, 'pending')).orderBy(desc(users.createdAt));
   }
 
+  async getUsersByRole(role: string): Promise<User[]> {
+    return await db.select().from(users).where(eq(users.role, role));
+  }
+
   async updateUserRole(id: string, role: string): Promise<User> {
     const [user] = await db
       .update(users)
@@ -141,6 +149,34 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, id))
       .returning();
     return user;
+  }
+
+  async updateUserProfile(id: string, profile: Partial<User>): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({ 
+        firstName: profile.firstName,
+        lastName: profile.lastName,
+        email: profile.email,
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, id))
+      .returning();
+    return user;
+  }
+
+  async updateUserPassword(id: string, passwordHash: string): Promise<void> {
+    await db
+      .update(users)
+      .set({ 
+        passwordHash,
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, id));
+  }
+
+  async deleteUser(id: string): Promise<void> {
+    await db.delete(users).where(eq(users.id, id));
   }
 
   // Category operations
