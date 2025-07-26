@@ -1,0 +1,364 @@
+import {
+  users,
+  categories,
+  inventoryItems,
+  purchases,
+  borrowingHistory,
+  type User,
+  type UpsertUser,
+  type Category,
+  type InsertCategory,
+  type InventoryItem,
+  type InsertInventoryItem,
+  type InventoryItemWithRelations,
+  type Purchase,
+  type InsertPurchase,
+  type PurchaseWithRelations,
+  type BorrowingHistory,
+  type InsertBorrowingHistory,
+  type BorrowingHistoryWithRelations,
+} from "@shared/schema";
+import { db } from "./db";
+import { eq, desc, and, isNull, sql } from "drizzle-orm";
+
+export interface IStorage {
+  // User operations
+  getUser(id: string): Promise<User | undefined>;
+  upsertUser(user: UpsertUser): Promise<User>;
+  getAllUsers(): Promise<User[]>;
+  updateUserRole(id: string, role: string): Promise<User>;
+
+  // Category operations
+  getAllCategories(): Promise<Category[]>;
+  createCategory(category: InsertCategory): Promise<Category>;
+  updateCategory(id: string, category: Partial<InsertCategory>): Promise<Category>;
+  deleteCategory(id: string): Promise<void>;
+
+  // Inventory operations
+  getAllInventoryItems(): Promise<InventoryItemWithRelations[]>;
+  getInventoryItem(id: string): Promise<InventoryItemWithRelations | undefined>;
+  createInventoryItem(item: InsertInventoryItem): Promise<InventoryItem>;
+  updateInventoryItem(id: string, item: Partial<InsertInventoryItem>): Promise<InventoryItem>;
+  deleteInventoryItem(id: string): Promise<void>;
+
+  // Borrowing operations
+  borrowItem(itemId: string, userId: string): Promise<void>;
+  returnItem(itemId: string): Promise<void>;
+  getBorrowingHistory(): Promise<BorrowingHistoryWithRelations[]>;
+  getUserBorrowingHistory(userId: string): Promise<BorrowingHistoryWithRelations[]>;
+
+  // Purchase operations
+  purchaseItem(purchase: InsertPurchase): Promise<Purchase>;
+  getAllPurchases(): Promise<PurchaseWithRelations[]>;
+  getUserPurchases(userId: string): Promise<PurchaseWithRelations[]>;
+
+  // Statistics
+  getStats(): Promise<{
+    totalItems: number;
+    borrowedItems: number;
+    availableItems: number;
+    totalUsers: number;
+    totalCategories: number;
+  }>;
+}
+
+export class DatabaseStorage implements IStorage {
+  // User operations
+  async getUser(id: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async upsertUser(userData: UpsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(userData)
+      .onConflictDoUpdate({
+        target: users.id,
+        set: {
+          ...userData,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return user;
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users).orderBy(desc(users.createdAt));
+  }
+
+  async updateUserRole(id: string, role: string): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({ role, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return user;
+  }
+
+  // Category operations
+  async getAllCategories(): Promise<Category[]> {
+    return await db.select().from(categories).orderBy(categories.name);
+  }
+
+  async createCategory(category: InsertCategory): Promise<Category> {
+    const [newCategory] = await db
+      .insert(categories)
+      .values(category)
+      .returning();
+    return newCategory;
+  }
+
+  async updateCategory(id: string, category: Partial<InsertCategory>): Promise<Category> {
+    const [updatedCategory] = await db
+      .update(categories)
+      .set({ ...category, updatedAt: new Date() })
+      .where(eq(categories.id, id))
+      .returning();
+    return updatedCategory;
+  }
+
+  async deleteCategory(id: string): Promise<void> {
+    await db.delete(categories).where(eq(categories.id, id));
+  }
+
+  // Inventory operations
+  async getAllInventoryItems(): Promise<InventoryItemWithRelations[]> {
+    return await db
+      .select()
+      .from(inventoryItems)
+      .leftJoin(categories, eq(inventoryItems.categoryId, categories.id))
+      .leftJoin(users, eq(inventoryItems.currentBorrowerId, users.id))
+      .orderBy(desc(inventoryItems.createdAt))
+      .then(rows => 
+        rows.map(row => ({
+          ...row.inventory_items,
+          category: row.categories!,
+          currentBorrower: row.users || undefined,
+        }))
+      );
+  }
+
+  async getInventoryItem(id: string): Promise<InventoryItemWithRelations | undefined> {
+    const result = await db
+      .select()
+      .from(inventoryItems)
+      .leftJoin(categories, eq(inventoryItems.categoryId, categories.id))
+      .leftJoin(users, eq(inventoryItems.currentBorrowerId, users.id))
+      .where(eq(inventoryItems.id, id));
+
+    if (result.length === 0) return undefined;
+
+    const row = result[0];
+    return {
+      ...row.inventory_items,
+      category: row.categories!,
+      currentBorrower: row.users || undefined,
+    };
+  }
+
+  async createInventoryItem(item: InsertInventoryItem): Promise<InventoryItem> {
+    const [newItem] = await db
+      .insert(inventoryItems)
+      .values(item)
+      .returning();
+    return newItem;
+  }
+
+  async updateInventoryItem(id: string, item: Partial<InsertInventoryItem>): Promise<InventoryItem> {
+    const [updatedItem] = await db
+      .update(inventoryItems)
+      .set({ ...item, updatedAt: new Date() })
+      .where(eq(inventoryItems.id, id))
+      .returning();
+    return updatedItem;
+  }
+
+  async deleteInventoryItem(id: string): Promise<void> {
+    await db.delete(inventoryItems).where(eq(inventoryItems.id, id));
+  }
+
+  // Borrowing operations
+  async borrowItem(itemId: string, userId: string): Promise<void> {
+    await db.transaction(async (tx) => {
+      // Update item status
+      await tx
+        .update(inventoryItems)
+        .set({
+          currentBorrowerId: userId,
+          borrowedAt: new Date(),
+          isAvailable: false,
+          updatedAt: new Date(),
+        })
+        .where(eq(inventoryItems.id, itemId));
+
+      // Add to borrowing history
+      await tx
+        .insert(borrowingHistory)
+        .values({
+          itemId,
+          borrowerId: userId,
+          borrowedAt: new Date(),
+        });
+    });
+  }
+
+  async returnItem(itemId: string): Promise<void> {
+    await db.transaction(async (tx) => {
+      // Update item status
+      await tx
+        .update(inventoryItems)
+        .set({
+          currentBorrowerId: null,
+          borrowedAt: null,
+          isAvailable: true,
+          updatedAt: new Date(),
+        })
+        .where(eq(inventoryItems.id, itemId));
+
+      // Update borrowing history
+      await tx
+        .update(borrowingHistory)
+        .set({
+          returnedAt: new Date(),
+          isReturned: true,
+        })
+        .where(
+          and(
+            eq(borrowingHistory.itemId, itemId),
+            eq(borrowingHistory.isReturned, false)
+          )
+        );
+    });
+  }
+
+  async getBorrowingHistory(): Promise<BorrowingHistoryWithRelations[]> {
+    return await db
+      .select()
+      .from(borrowingHistory)
+      .leftJoin(inventoryItems, eq(borrowingHistory.itemId, inventoryItems.id))
+      .leftJoin(users, eq(borrowingHistory.borrowerId, users.id))
+      .orderBy(desc(borrowingHistory.borrowedAt))
+      .then(rows =>
+        rows.map(row => ({
+          ...row.borrowing_history,
+          item: row.inventory_items!,
+          borrower: row.users!,
+        }))
+      );
+  }
+
+  async getUserBorrowingHistory(userId: string): Promise<BorrowingHistoryWithRelations[]> {
+    return await db
+      .select()
+      .from(borrowingHistory)
+      .leftJoin(inventoryItems, eq(borrowingHistory.itemId, inventoryItems.id))
+      .leftJoin(users, eq(borrowingHistory.borrowerId, users.id))
+      .where(eq(borrowingHistory.borrowerId, userId))
+      .orderBy(desc(borrowingHistory.borrowedAt))
+      .then(rows =>
+        rows.map(row => ({
+          ...row.borrowing_history,
+          item: row.inventory_items!,
+          borrower: row.users!,
+        }))
+      );
+  }
+
+  // Purchase operations
+  async purchaseItem(purchase: InsertPurchase): Promise<Purchase> {
+    return await db.transaction(async (tx) => {
+      // Create purchase record
+      const [newPurchase] = await tx
+        .insert(purchases)
+        .values(purchase)
+        .returning();
+
+      // Update item stock if purchasable
+      await tx
+        .update(inventoryItems)
+        .set({
+          stockQuantity: sql`${inventoryItems.stockQuantity} - ${purchase.quantity}`,
+          updatedAt: new Date(),
+        })
+        .where(eq(inventoryItems.id, purchase.itemId));
+
+      return newPurchase;
+    });
+  }
+
+  async getAllPurchases(): Promise<PurchaseWithRelations[]> {
+    return await db
+      .select()
+      .from(purchases)
+      .leftJoin(inventoryItems, eq(purchases.itemId, inventoryItems.id))
+      .leftJoin(users, eq(purchases.userId, users.id))
+      .orderBy(desc(purchases.purchasedAt))
+      .then(rows =>
+        rows.map(row => ({
+          ...row.purchases,
+          item: row.inventory_items!,
+          user: row.users!,
+        }))
+      );
+  }
+
+  async getUserPurchases(userId: string): Promise<PurchaseWithRelations[]> {
+    return await db
+      .select()
+      .from(purchases)
+      .leftJoin(inventoryItems, eq(purchases.itemId, inventoryItems.id))
+      .leftJoin(users, eq(purchases.userId, users.id))
+      .where(eq(purchases.userId, userId))
+      .orderBy(desc(purchases.purchasedAt))
+      .then(rows =>
+        rows.map(row => ({
+          ...row.purchases,
+          item: row.inventory_items!,
+          user: row.users!,
+        }))
+      );
+  }
+
+  // Statistics
+  async getStats(): Promise<{
+    totalItems: number;
+    borrowedItems: number;
+    availableItems: number;
+    totalUsers: number;
+    totalCategories: number;
+  }> {
+    const [totalItemsResult] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(inventoryItems);
+
+    const [borrowedItemsResult] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(inventoryItems)
+      .where(eq(inventoryItems.isAvailable, false));
+
+    const [availableItemsResult] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(inventoryItems)
+      .where(eq(inventoryItems.isAvailable, true));
+
+    const [totalUsersResult] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(users);
+
+    const [totalCategoriesResult] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(categories);
+
+    return {
+      totalItems: totalItemsResult.count,
+      borrowedItems: borrowedItemsResult.count,
+      availableItems: availableItemsResult.count,
+      totalUsers: totalUsersResult.count,
+      totalCategories: totalCategoriesResult.count,
+    };
+  }
+}
+
+export const storage = new DatabaseStorage();
