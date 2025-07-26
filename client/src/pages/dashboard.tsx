@@ -9,7 +9,8 @@ import StatsWidget from "@/components/stats/stats-widget";
 import ItemCard from "@/components/inventory/item-card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Filter, ShoppingBag } from "lucide-react";
+import { Filter, ShoppingBag, LogOut } from "lucide-react";
+import { apiRequest } from "@/lib/queryClient";
 import { useState } from "react";
 import AddItemModal from "@/components/inventory/add-item-modal";
 import type { InventoryItemWithRelations, Category } from "@shared/schema";
@@ -21,6 +22,29 @@ export default function Dashboard() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [showAvailableOnly, setShowAvailableOnly] = useState(false);
   const [showPurchasableOnly, setShowPurchasableOnly] = useState(false);
+
+  const handleLogout = async () => {
+    try {
+      await apiRequest('/api/logout', {
+        method: 'POST',
+      });
+      
+      toast({
+        title: "Erfolgreich abgemeldet",
+        description: "Auf Wiedersehen!",
+      });
+      
+      // Reload page to trigger auth state update
+      window.location.reload();
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast({
+        title: "Fehler beim Abmelden",
+        description: "Es gab ein Problem beim Abmelden",
+        variant: "destructive",
+      });
+    }
+  };
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -76,12 +100,29 @@ export default function Dashboard() {
     <div className="min-h-screen flex bg-background">
       <Sidebar />
       <main className="flex-1 lg:ml-0">
-        <Header 
-          title="Dashboard"
-          subtitle="Welcome back! Here's your workshop overview."
-          showAddButton={user?.role === 'admin'}
-          onAddClick={() => setShowAddModal(true)}
-        />
+        <div className="p-6 border-b border-border">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+              <p className="text-muted-foreground">Willkommen zurück! Hier ist Ihre Workshop-Übersicht.</p>
+            </div>
+            <div className="flex items-center space-x-4">
+              {user?.role === 'admin' && (
+                <Button onClick={() => setShowAddModal(true)}>
+                  Neues Element hinzufügen
+                </Button>
+              )}
+              <Button
+                onClick={handleLogout}
+                variant="outline"
+                size="sm"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Abmelden
+              </Button>
+            </div>
+          </div>
+        </div>
         
         <div className="p-6">
           <StatsWidget />

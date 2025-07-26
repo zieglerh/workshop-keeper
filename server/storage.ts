@@ -6,6 +6,7 @@ import {
   borrowingHistory,
   type User,
   type UpsertUser,
+  type InsertUser,
   type Category,
   type InsertCategory,
   type InventoryItem,
@@ -25,6 +26,8 @@ export interface IStorage {
   // User operations
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
+  getUserByUsername(username: string): Promise<User | undefined>;
+  createUser(user: InsertUser): Promise<User>;
   upsertUser(user: UpsertUser): Promise<User>;
   getAllUsers(): Promise<User[]>;
   updateUserRole(id: string, role: string): Promise<User>;
@@ -75,14 +78,46 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async upsertUser(userData: UpsertUser): Promise<User> {
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
+  }
+
+  async createUser(userData: InsertUser): Promise<User> {
     const [user] = await db
       .insert(users)
       .values(userData)
+      .returning();
+    return user;
+  }
+
+  async upsertUser(userData: UpsertUser): Promise<User> {
+    // For legacy OAuth support - convert to InsertUser format with required fields
+    const insertData: InsertUser = {
+      username: userData.email || 'unknown',
+      passwordHash: 'oauth-user', // placeholder for OAuth users
+      email: userData.email,
+      firstName: userData.firstName,
+      lastName: userData.lastName,
+      profileImageUrl: userData.profileImageUrl,
+      role: userData.role || 'user',
+      name: userData.name,
+      phone: userData.phone,
+    };
+
+    const [user] = await db
+      .insert(users)
+      .values(insertData)
       .onConflictDoUpdate({
-        target: users.id,
+        target: users.username,
         set: {
-          ...userData,
+          email: insertData.email,
+          firstName: insertData.firstName,
+          lastName: insertData.lastName,
+          profileImageUrl: insertData.profileImageUrl,
+          role: insertData.role,
+          name: insertData.name,
+          phone: insertData.phone,
           updatedAt: new Date(),
         },
       })

@@ -1,8 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated as replitAuth } from "./replitAuth";
-import { setupLocalAuth, isAuthenticated as localAuth } from "./localAuth";
+import { setupAuth, isAuthenticated } from "./auth";
 import {
   insertCategorySchema,
   insertInventoryItemSchema,
@@ -11,23 +10,13 @@ import {
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Auth middleware - use local auth for Docker environment
-  const isLocalDevelopment = process.env.NODE_ENV === 'production' && 
-    process.env.DATABASE_URL?.includes('localhost') || 
-    process.env.DATABASE_URL?.includes('db:5432');
-  
-  if (isLocalDevelopment) {
-    await setupLocalAuth(app);
-  } else {
-    await setupAuth(app);
-  }
-
-  const authMiddleware = isLocalDevelopment ? localAuth : replitAuth;
+  // Setup authentication
+  await setupAuth(app);
 
   // Auth routes
-  app.get('/api/auth/user', authMiddleware, async (req: any, res) => {
+  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
       res.json(user);
     } catch (error) {
@@ -37,9 +26,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // User management routes (admin only)
-  app.get("/api/users", authMiddleware, async (req: any, res) => {
+  app.get("/api/users", isAuthenticated, async (req: any, res) => {
     try {
-      const currentUser = await storage.getUser(req.user.claims.sub);
+      const currentUser = await storage.getUser(req.user.id);
       if (currentUser?.role !== 'admin') {
         return res.status(403).json({ message: "Admin access required" });
       }
@@ -52,9 +41,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/users/:id/role", authMiddleware, async (req: any, res) => {
+  app.patch("/api/users/:id/role", isAuthenticated, async (req: any, res) => {
     try {
-      const currentUser = await storage.getUser(req.user.claims.sub);
+      const currentUser = await storage.getUser(req.user.id);
       if (currentUser?.role !== 'admin') {
         return res.status(403).json({ message: "Admin access required" });
       }
@@ -73,7 +62,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Category routes
-  app.get("/api/categories", authMiddleware, async (req, res) => {
+  app.get("/api/categories", isAuthenticated, async (req, res) => {
     try {
       const categories = await storage.getAllCategories();
       res.json(categories);
@@ -83,9 +72,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/categories", authMiddleware, async (req: any, res) => {
+  app.post("/api/categories", isAuthenticated, async (req: any, res) => {
     try {
-      const currentUser = await storage.getUser(req.user.claims.sub);
+      const currentUser = await storage.getUser(req.user.id);
       if (currentUser?.role !== 'admin') {
         return res.status(403).json({ message: "Admin access required" });
       }
@@ -102,9 +91,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/categories/:id", authMiddleware, async (req: any, res) => {
+  app.patch("/api/categories/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const currentUser = await storage.getUser(req.user.claims.sub);
+      const currentUser = await storage.getUser(req.user.id);
       if (currentUser?.role !== 'admin') {
         return res.status(403).json({ message: "Admin access required" });
       }
@@ -121,15 +110,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/categories/:id", authMiddleware, async (req: any, res) => {
+  app.delete("/api/categories/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const currentUser = await storage.getUser(req.user.claims.sub);
+      const currentUser = await storage.getUser(req.user.id);
       if (currentUser?.role !== 'admin') {
         return res.status(403).json({ message: "Admin access required" });
       }
 
       await storage.deleteCategory(req.params.id);
-      res.json({ message: "Category deleted successfully" });
+      res.json({ success: true });
     } catch (error) {
       console.error("Error deleting category:", error);
       res.status(500).json({ message: "Failed to delete category" });
@@ -137,7 +126,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Inventory routes
-  app.get("/api/inventory", authMiddleware, async (req, res) => {
+  app.get("/api/inventory", isAuthenticated, async (req, res) => {
     try {
       const items = await storage.getAllInventoryItems();
       res.json(items);
@@ -147,7 +136,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/inventory/:id", authMiddleware, async (req, res) => {
+  app.get("/api/inventory/:id", isAuthenticated, async (req, res) => {
     try {
       const item = await storage.getInventoryItem(req.params.id);
       if (!item) {
@@ -156,13 +145,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(item);
     } catch (error) {
       console.error("Error fetching inventory item:", error);
-      res.status(500).json({ message: "Failed to fetch item" });
+      res.status(500).json({ message: "Failed to fetch inventory item" });
     }
   });
 
-  app.post("/api/inventory", authMiddleware, async (req: any, res) => {
+  app.post("/api/inventory", isAuthenticated, async (req: any, res) => {
     try {
-      const currentUser = await storage.getUser(req.user.claims.sub);
+      const currentUser = await storage.getUser(req.user.id);
       if (currentUser?.role !== 'admin') {
         return res.status(403).json({ message: "Admin access required" });
       }
@@ -175,13 +164,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid item data", errors: error.errors });
       }
       console.error("Error creating inventory item:", error);
-      res.status(500).json({ message: "Failed to create item" });
+      res.status(500).json({ message: "Failed to create inventory item" });
     }
   });
 
-  app.patch("/api/inventory/:id", authMiddleware, async (req: any, res) => {
+  app.patch("/api/inventory/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const currentUser = await storage.getUser(req.user.claims.sub);
+      const currentUser = await storage.getUser(req.user.id);
       if (currentUser?.role !== 'admin') {
         return res.status(403).json({ message: "Admin access required" });
       }
@@ -194,80 +183,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid item data", errors: error.errors });
       }
       console.error("Error updating inventory item:", error);
-      res.status(500).json({ message: "Failed to update item" });
+      res.status(500).json({ message: "Failed to update inventory item" });
     }
   });
 
-  app.delete("/api/inventory/:id", authMiddleware, async (req: any, res) => {
+  app.delete("/api/inventory/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const currentUser = await storage.getUser(req.user.claims.sub);
+      const currentUser = await storage.getUser(req.user.id);
       if (currentUser?.role !== 'admin') {
         return res.status(403).json({ message: "Admin access required" });
       }
 
       await storage.deleteInventoryItem(req.params.id);
-      res.json({ message: "Item deleted successfully" });
+      res.json({ success: true });
     } catch (error) {
       console.error("Error deleting inventory item:", error);
-      res.status(500).json({ message: "Failed to delete item" });
+      res.status(500).json({ message: "Failed to delete inventory item" });
     }
   });
 
   // Borrowing routes
-  app.post("/api/inventory/:id/borrow", authMiddleware, async (req: any, res) => {
+  app.post("/api/inventory/:id/borrow", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const itemId = req.params.id;
-      
-      const item = await storage.getInventoryItem(itemId);
-      if (!item) {
-        return res.status(404).json({ message: "Item not found" });
-      }
-      
-      if (!item.isAvailable) {
-        return res.status(400).json({ message: "Item is not available for borrowing" });
-      }
-
-      await storage.borrowItem(itemId, userId);
-      res.json({ message: "Item borrowed successfully" });
+      await storage.borrowItem(req.params.id, req.user.id);
+      res.json({ success: true });
     } catch (error) {
       console.error("Error borrowing item:", error);
       res.status(500).json({ message: "Failed to borrow item" });
     }
   });
 
-  app.post("/api/inventory/:id/return", authMiddleware, async (req: any, res) => {
+  app.post("/api/inventory/:id/return", isAuthenticated, async (req: any, res) => {
     try {
-      const currentUser = await storage.getUser(req.user.claims.sub);
-      const itemId = req.params.id;
-      
-      const item = await storage.getInventoryItem(itemId);
-      if (!item) {
-        return res.status(404).json({ message: "Item not found" });
+      const currentUser = await storage.getUser(req.user.id);
+      if (currentUser?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
       }
 
-      // Allow admin to return any item, or user to return their own borrowed item
-      if (currentUser?.role !== 'admin' && item.currentBorrowerId !== req.user.claims.sub) {
-        return res.status(403).json({ message: "You can only return items you borrowed" });
-      }
-
-      await storage.returnItem(itemId);
-      res.json({ message: "Item returned successfully" });
+      await storage.returnItem(req.params.id);
+      res.json({ success: true });
     } catch (error) {
       console.error("Error returning item:", error);
       res.status(500).json({ message: "Failed to return item" });
     }
   });
 
-  app.get("/api/borrowing-history", authMiddleware, async (req: any, res) => {
+  app.get("/api/borrowing", isAuthenticated, async (req: any, res) => {
     try {
-      const currentUser = await storage.getUser(req.user.claims.sub);
+      const currentUser = await storage.getUser(req.user.id);
       let history;
       
       if (currentUser?.role === 'admin') {
         history = await storage.getBorrowingHistory();
       } else {
-        history = await storage.getUserBorrowingHistory(req.user.claims.sub);
+        history = await storage.getUserBorrowingHistory(req.user.id);
       }
       
       res.json(history);
@@ -278,57 +247,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Purchase routes
-  app.post("/api/inventory/:id/purchase", authMiddleware, async (req: any, res) => {
+  app.post("/api/purchases", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const itemId = req.params.id;
-      const { quantity = 1 } = req.body;
-
-      const item = await storage.getInventoryItem(itemId);
-      if (!item) {
-        return res.status(404).json({ message: "Item not found" });
-      }
-
-      if (!item.isPurchasable) {
-        return res.status(400).json({ message: "Item is not purchasable" });
-      }
-
-      if (!item.stockQuantity || item.stockQuantity < quantity) {
-        return res.status(400).json({ message: "Insufficient stock" });
-      }
-
-      if (!item.pricePerUnit) {
-        return res.status(400).json({ message: "Item price not set" });
-      }
-
-      const pricePerUnit = parseFloat(item.pricePerUnit);
-      const totalPrice = pricePerUnit * quantity;
-
-      const purchaseData = {
-        itemId,
-        userId,
-        quantity,
-        pricePerUnit: item.pricePerUnit,
-        totalPrice: totalPrice.toString(),
-      };
-
+      const purchaseData = insertPurchaseSchema.parse({
+        ...req.body,
+        userId: req.user.id,
+      });
+      
       const purchase = await storage.purchaseItem(purchaseData);
       res.json(purchase);
     } catch (error) {
-      console.error("Error purchasing item:", error);
-      res.status(500).json({ message: "Failed to purchase item" });
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid purchase data", errors: error.errors });
+      }
+      console.error("Error creating purchase:", error);
+      res.status(500).json({ message: "Failed to create purchase" });
     }
   });
 
-  app.get("/api/purchases", authMiddleware, async (req: any, res) => {
+  app.get("/api/purchases", isAuthenticated, async (req: any, res) => {
     try {
-      const currentUser = await storage.getUser(req.user.claims.sub);
+      const currentUser = await storage.getUser(req.user.id);
       let purchases;
       
       if (currentUser?.role === 'admin') {
         purchases = await storage.getAllPurchases();
       } else {
-        purchases = await storage.getUserPurchases(req.user.claims.sub);
+        purchases = await storage.getUserPurchases(req.user.id);
       }
       
       res.json(purchases);
@@ -339,13 +284,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Statistics route
-  app.get("/api/stats", authMiddleware, async (req, res) => {
+  app.get("/api/stats", isAuthenticated, async (req, res) => {
     try {
       const stats = await storage.getStats();
       res.json(stats);
     } catch (error) {
       console.error("Error fetching stats:", error);
-      res.status(500).json({ message: "Failed to fetch statistics" });
+      res.status(500).json({ message: "Failed to fetch stats" });
     }
   });
 
