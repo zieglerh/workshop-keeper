@@ -9,7 +9,7 @@ import {
 } from "@shared/schema";
 import { z } from "zod";
 import { upload, deleteUploadedFile } from "./upload";
-import { sendBorrowNotification } from "./emailService";
+import { sendBorrowNotification, sendPurchaseNotification, sendUserRegistrationNotification } from "./emailService";
 import path from "path";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -550,7 +550,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: req.user.id,
       });
       
+      // Get item and buyer details for email notification
+      const item = await storage.getInventoryItem(purchaseData.itemId);
+      const buyer = await storage.getUser(req.user.id);
+      
+      if (!item) {
+        return res.status(404).json({ message: "Item not found" });
+      }
+
       const purchase = await storage.purchaseItem(purchaseData);
+      
+      // Send email notification to all admins
+      try {
+        const allAdmins = await storage.getUsersByRole('admin');
+        const adminEmails = allAdmins
+          .map(admin => admin.email)
+          .filter(email => email !== null && email !== '') as string[];
+        
+        if (adminEmails.length > 0) {
+          const buyerName = buyer ? 
+            (buyer.firstName && buyer.lastName 
+              ? `${buyer.firstName} ${buyer.lastName}`
+              : buyer.username || buyer.email || 'Unknown User')
+            : 'Unknown User';
+
+          await sendPurchaseNotification({
+            itemName: item.name,
+            buyerName,
+            buyerEmail: buyer?.email || undefined,
+            quantity: purchaseData.quantity,
+            totalPrice: purchaseData.quantity * (item.price || 0),
+            purchaseDate: new Date().toLocaleDateString('de-DE', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            }),
+            adminEmails
+          });
+        }
+      } catch (emailError) {
+        console.error("Error sending purchase notification email:", emailError);
+        // Don't fail the purchase process if email fails
+      }
+      
       res.json(purchase);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -590,17 +634,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Test email endpoint (admin only)
-  app.post("/api/test-email", isAuthenticated, async (req: any, res) => {
+  // Test email endpoints (admin only)
+  app.post("/api/test-email/borrow", isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.id);
       if (currentUser?.role !== 'admin') {
         return res.status(403).json({ message: "Admin access required" });
       }
 
-      // Test email with current admin
       const success = await sendBorrowNotification({
-        itemName: "Test-Gegenstand",
+        itemName: "Test-Ausleih-Gegenstand",
         borrowerName: "Test-Benutzer",
         borrowerEmail: "test@example.com",
         borrowDate: new Date().toLocaleDateString('de-DE', {
@@ -615,12 +658,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ 
         success, 
-        message: success ? "Test email sent successfully" : "Failed to send test email",
+        message: success ? "Test borrow email sent successfully" : "Failed to send test borrow email",
         email: currentUser.email
       });
     } catch (error) {
-      console.error("Error sending test email:", error);
-      res.status(500).json({ message: "Error sending test email" });
+      console.error("Error sending test borrow email:", error);
+      res.status(500).json({ message: "Error sending test borrow email" });
+    }
+  });
+
+  app.post("/api/test-email/purchase", isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.id);
+      if (currentUser?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const success = await sendPurchaseNotification({
+        itemName: "Test-Kauf-Artikel",
+        buyerName: "Test-Käufer",
+        buyerEmail: "test-buyer@example.com",
+        quantity: 2,
+        totalPrice: 25.99,
+        purchaseDate: new Date().toLocaleDateString('de-DE', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        }),
+        adminEmails: currentUser.email ? [currentUser.email] : []
+      });
+
+      res.json({ 
+        success, 
+        message: success ? "Test purchase email sent successfully" : "Failed to send test purchase email",
+        email: currentUser.email
+      });
+    } catch (error) {
+      console.error("Error sending test purchase email:", error);
+      res.status(500).json({ message: "Error sending test purchase email" });
+    }
+  });
+
+  app.post("/api/test-email/registration", isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.id);
+      if (currentUser?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const success = await sendUserRegistrationNotification({
+        username: "test-user-123",
+        firstName: "Max",
+        lastName: "Mustermann",
+        email: "max.mustermann@example.com",
+        registrationDate: new Date().toLocaleDateString('de-DE', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        }),
+        adminEmails: currentUser.email ? [currentUser.email] : []
+      });
+
+      res.json({ 
+        success, 
+        message: success ? "Test registration email sent successfully" : "Failed to send test registration email",
+        email: currentUser.email
+      });
+    } catch (error) {
+      console.error("Error sending test registration email:", error);
+      res.status(500).json({ message: "Error sending test registration email" });
     }
   });
 

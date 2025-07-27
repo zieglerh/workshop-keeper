@@ -3,6 +3,7 @@ import session from "express-session";
 import connectPg from "connect-pg-simple";
 import bcrypt from "bcrypt";
 import { storage } from "./storage";
+import { sendUserRegistrationNotification } from "./emailService";
 
 export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
@@ -118,7 +119,7 @@ export async function setupAuth(app: Express) {
   // Public registration endpoint (creates inactive users)
   app.post("/api/register", async (req, res) => {
     try {
-      const { username, password, email, firstName, lastName } = req.body;
+      const { username, password, email, firstName, lastName, phone } = req.body;
       
       if (!username || !password) {
         return res.status(400).json({ message: "Benutzername und Passwort sind erforderlich" });
@@ -140,8 +141,37 @@ export async function setupAuth(app: Express) {
         email: email || null,
         firstName: firstName || null,
         lastName: lastName || null,
+        phone: phone || null,
         role: 'pending', // Special role for pending approval
       });
+
+      // Send email notification to all admins
+      try {
+        const allAdmins = await storage.getUsersByRole('admin');
+        const adminEmails = allAdmins
+          .map(admin => admin.email)
+          .filter(email => email !== null && email !== '') as string[];
+        
+        if (adminEmails.length > 0) {
+          await sendUserRegistrationNotification({
+            username: newUser.username,
+            firstName: newUser.firstName || undefined,
+            lastName: newUser.lastName || undefined,
+            email: newUser.email || undefined,
+            registrationDate: new Date().toLocaleDateString('de-DE', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            }),
+            adminEmails
+          });
+        }
+      } catch (emailError) {
+        console.error("Error sending registration notification email:", emailError);
+        // Don't fail the registration process if email fails
+      }
 
       res.json({ 
         success: true, 

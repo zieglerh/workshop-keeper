@@ -120,5 +120,8 @@ The application uses PostgreSQL with the following core entities:
 - **Database Initialization**: Enhanced init.sql with all tables, default admin user, and current categories
 - **API Bug Fixes**: Corrected apiRequest parameter order across all components
 - **Schema Synchronization**: Fixed init.sql to match Drizzle schema with correct bcrypt hash
+- **Email Notification System**: Complete SMTP integration with German email templates for admin notifications
+- **Phone Number Support**: Added optional phone field across all user forms and management interfaces
+- **Email Events**: Automated notifications for item borrowing, purchases, and new user registrations
 
 The application is designed to run efficiently on Replit's infrastructure with secure username/password authentication and admin-controlled user registration.
