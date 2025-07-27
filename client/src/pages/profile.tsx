@@ -31,9 +31,7 @@ export default function Profile() {
 
   const handleLogout = async () => {
     try {
-      await apiRequest('/api/logout', {
-        method: 'POST',
-      });
+      await apiRequest('POST', '/api/logout');
       
       toast({
         title: "Erfolgreich abgemeldet",
@@ -53,13 +51,7 @@ export default function Profile() {
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: typeof profileData) => {
-      await apiRequest('/api/profile', {
-        method: 'PATCH',
-        body: JSON.stringify(data),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      await apiRequest('PATCH', '/api/profile', data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
@@ -79,15 +71,9 @@ export default function Profile() {
 
   const changePasswordMutation = useMutation({
     mutationFn: async (data: typeof passwordData) => {
-      await apiRequest('/api/change-password', {
-        method: 'POST',
-        body: JSON.stringify({
-          currentPassword: data.currentPassword,
-          newPassword: data.newPassword,
-        }),
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      await apiRequest('POST', '/api/change-password', {
+        currentPassword: data.currentPassword,
+        newPassword: data.newPassword,
       });
     },
     onSuccess: () => {
@@ -112,9 +98,7 @@ export default function Profile() {
 
   const deleteAccountMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest('/api/profile', {
-        method: 'DELETE',
-      });
+      await apiRequest('DELETE', '/api/profile');
     },
     onSuccess: () => {
       toast({

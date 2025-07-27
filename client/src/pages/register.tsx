@@ -48,18 +48,12 @@ export default function Register() {
     }
 
     try {
-      await apiRequest('/api/register', {
-        method: 'POST',
-        body: JSON.stringify({
-          username: formData.username,
-          password: formData.password,
-          email: formData.email || null,
-          firstName: formData.firstName || null,
-          lastName: formData.lastName || null,
-        }),
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      await apiRequest('POST', '/api/register', {
+        username: formData.username,
+        password: formData.password,
+        email: formData.email || null,
+        firstName: formData.firstName || null,
+        lastName: formData.lastName || null,
       });
 
       setSuccess(true);

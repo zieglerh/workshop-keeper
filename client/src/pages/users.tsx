@@ -93,13 +93,7 @@ export default function Users() {
 
   const updateRoleMutation = useMutation({
     mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
-      await apiRequest(`/api/users/${userId}/role`, {
-        method: 'PATCH',
-        body: JSON.stringify({ role }),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      await apiRequest('PATCH', `/api/users/${userId}/role`, { role });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
@@ -120,13 +114,7 @@ export default function Users() {
 
   const activateUserMutation = useMutation({
     mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
-      await apiRequest(`/api/users/${userId}/activate`, {
-        method: 'PATCH',
-        body: JSON.stringify({ role }),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      await apiRequest('PATCH', `/api/users/${userId}/activate`, { role });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
@@ -147,13 +135,7 @@ export default function Users() {
 
   const editUserMutation = useMutation({
     mutationFn: async ({ userId, data }: { userId: string; data: typeof editData }) => {
-      await apiRequest(`/api/users/${userId}/profile`, {
-        method: 'PATCH',
-        body: JSON.stringify(data),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      await apiRequest('PATCH', `/api/users/${userId}/profile`, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
@@ -174,9 +156,7 @@ export default function Users() {
 
   const deleteUserMutation = useMutation({
     mutationFn: async (userId: string) => {
-      await apiRequest(`/api/users/${userId}`, {
-        method: 'DELETE',
-      });
+      await apiRequest('DELETE', `/api/users/${userId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });

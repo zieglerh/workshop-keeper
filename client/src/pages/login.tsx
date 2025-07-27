@@ -23,13 +23,7 @@ export default function Login() {
     setError(null);
 
     try {
-      await apiRequest('/api/login', {
-        method: 'POST',
-        body: JSON.stringify({ username, password }),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      await apiRequest('POST', '/api/login', { username, password });
 
       toast({
         title: "Erfolgreich angemeldet",
