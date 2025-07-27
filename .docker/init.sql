@@ -81,8 +81,8 @@ INSERT INTO users (id, username, password_hash, email, first_name, last_name, ro
 VALUES (
   'admin-default-user-id', 
   'admin', 
-  '$2b$10$0SOGIqC4bSvsnWntKH6rW.tg.MMDjV.Gh6.4Vl3wTiuRsrTlxpSUa', 
-  'admin@workshop.local', 
+  '$2b$10$O5yQQ2jVnlKKPFnNrEBbvOK1mm.n5bSpy/x4P4.OdzE8DnGM/r/hO', 
+  'admin@intertwinet.de', 
   'System', 
   'Administrator', 
   'admin', 
