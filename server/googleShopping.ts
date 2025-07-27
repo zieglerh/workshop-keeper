@@ -39,7 +39,7 @@ export async function searchGoogleShopping(query: string): Promise<GoogleShoppin
     const mappedResults = response.shopping_results.slice(0, 10).map((item: any) => ({
       title: item.title || 'Unbekannter Artikel',
       price: item.price || undefined,
-      link: item.serpapi_product_api || item.link || item.product_link || '',
+      link: item.product_link || item.link || '',
       thumbnail: item.thumbnail || undefined,
       source: item.source || 'Unbekannter Shop',
       delivery: item.delivery || undefined,
