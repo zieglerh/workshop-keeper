@@ -6,12 +6,14 @@ import { isUnauthorizedError } from "@/lib/authUtils";
 import Sidebar from "@/components/layout/sidebar";
 import Header from "@/components/layout/header";
 import CategoryModal from "@/components/categories/category-modal";
+import NotificationManager from "@/components/notifications/notification-manager";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useMutation } from "@tanstack/react-query";
-import { Edit, Trash2, Tags, Lock } from "lucide-react";
+import { Edit, Trash2, Tags, Lock, MessageSquare, Plus } from "lucide-react";
 import type { Category } from "@shared/schema";
 
 export default function Categories() {

@@ -14,24 +14,25 @@ import type { InventoryItemWithRelations, Category } from "@shared/schema";
 interface ItemCardProps {
   item: InventoryItemWithRelations;
   userRole?: string;
+  onPurchaseSuccess?: () => void;
+  onBorrowSuccess?: () => void;
 }
 
-export default function ItemCard({ item, userRole }: ItemCardProps) {
+export default function ItemCard({ item, userRole, onPurchaseSuccess, onBorrowSuccess }: ItemCardProps) {
   const { toast } = useToast();
   const [showEditModal, setShowEditModal] = useState(false);
   const [purchaseQuantity, setPurchaseQuantity] = useState(1);
 
   const borrowMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest("POST", `/api/inventory/${item.id}/borrow`);
+      return await apiRequest("POST", `/api/inventory/${item.id}/borrow`);
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
       queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
-      toast({
-        title: "Success",
-        description: "Item borrowed successfully",
-      });
+      if (data?.notification) {
+        onBorrowSuccess?.();
+      }
     },
     onError: (error: Error) => {
       if (isUnauthorizedError(error)) {
@@ -87,17 +88,19 @@ export default function ItemCard({ item, userRole }: ItemCardProps) {
 
   const purchaseMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest("POST", `/api/inventory/${item.id}/purchase`, {
+      return await apiRequest("POST", `/api/purchases`, {
+        itemId: item.id,
         quantity: purchaseQuantity,
+        pricePerUnit: item.price || 0,
+        totalPrice: (item.price || 0) * purchaseQuantity,
       });
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
       queryClient.invalidateQueries({ queryKey: ["/api/purchases"] });
-      toast({
-        title: "Success",
-        description: "Item purchased successfully",
-      });
+      if (data?.notification) {
+        onPurchaseSuccess?.();
+      }
       setPurchaseQuantity(1);
     },
     onError: (error: Error) => {

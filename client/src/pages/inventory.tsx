@@ -7,6 +7,7 @@ import Sidebar from "@/components/layout/sidebar";
 import Header from "@/components/layout/header";
 import ItemCard from "@/components/inventory/item-card";
 import AddItemModal from "@/components/inventory/add-item-modal";
+import UserNotification from "@/components/notifications/user-notification";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -21,6 +22,8 @@ export default function Inventory() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [showAvailableOnly, setShowAvailableOnly] = useState(false);
   const [showPurchasableOnly, setShowPurchasableOnly] = useState(false);
+  const [showPurchaseNotification, setShowPurchaseNotification] = useState(false);
+  const [showBorrowNotification, setShowBorrowNotification] = useState(false);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -161,7 +164,13 @@ export default function Inventory() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {filteredInventory.map((item: InventoryItemWithRelations) => (
-                <ItemCard key={item.id} item={item} userRole={user?.role} />
+                <ItemCard 
+                  key={item.id} 
+                  item={item} 
+                  userRole={user?.role}
+                  onPurchaseSuccess={() => setShowPurchaseNotification(true)}
+                  onBorrowSuccess={() => setShowBorrowNotification(true)}
+                />
               ))}
             </div>
           )}
@@ -175,6 +184,18 @@ export default function Inventory() {
           categories={categories}
         />
       )}
+
+      {/* Notifications */}
+      <UserNotification 
+        type="purchase" 
+        isVisible={showPurchaseNotification} 
+        onClose={() => setShowPurchaseNotification(false)} 
+      />
+      <UserNotification 
+        type="borrow" 
+        isVisible={showBorrowNotification} 
+        onClose={() => setShowBorrowNotification(false)} 
+      />
     </div>
   );
 }

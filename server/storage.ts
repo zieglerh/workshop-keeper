@@ -4,6 +4,7 @@ import {
   inventoryItems,
   purchases,
   borrowingHistory,
+  notificationTemplates,
   type User,
   type UpsertUser,
   type InsertUser,
@@ -18,6 +19,8 @@ import {
   type BorrowingHistory,
   type InsertBorrowingHistory,
   type BorrowingHistoryWithRelations,
+  type NotificationTemplate,
+  type InsertNotificationTemplate,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, isNull, sql } from "drizzle-orm";
@@ -69,6 +72,14 @@ export interface IStorage {
     totalUsers: number;
     totalCategories: number;
   }>;
+
+  // Notification Templates
+  getAllNotificationTemplates(): Promise<NotificationTemplate[]>;
+  getNotificationTemplate(id: string): Promise<NotificationTemplate | undefined>;
+  getNotificationTemplateByType(type: string): Promise<NotificationTemplate | undefined>;
+  createNotificationTemplate(template: InsertNotificationTemplate): Promise<NotificationTemplate>;
+  updateNotificationTemplate(id: string, template: Partial<InsertNotificationTemplate>): Promise<NotificationTemplate>;
+  deleteNotificationTemplate(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -445,6 +456,43 @@ export class DatabaseStorage implements IStorage {
       totalUsers: totalUsersResult.count,
       totalCategories: totalCategoriesResult.count,
     };
+  }
+
+  // Notification Templates
+  async getAllNotificationTemplates(): Promise<NotificationTemplate[]> {
+    return await db.select().from(notificationTemplates).orderBy(notificationTemplates.type, notificationTemplates.createdAt);
+  }
+
+  async getNotificationTemplate(id: string): Promise<NotificationTemplate | undefined> {
+    const [template] = await db.select().from(notificationTemplates).where(eq(notificationTemplates.id, id));
+    return template;
+  }
+
+  async getNotificationTemplateByType(type: string): Promise<NotificationTemplate | undefined> {
+    const [template] = await db.select().from(notificationTemplates)
+      .where(and(eq(notificationTemplates.type, type), eq(notificationTemplates.isActive, true)));
+    return template;
+  }
+
+  async createNotificationTemplate(template: InsertNotificationTemplate): Promise<NotificationTemplate> {
+    const [newTemplate] = await db
+      .insert(notificationTemplates)
+      .values(template)
+      .returning();
+    return newTemplate;
+  }
+
+  async updateNotificationTemplate(id: string, template: Partial<InsertNotificationTemplate>): Promise<NotificationTemplate> {
+    const [updatedTemplate] = await db
+      .update(notificationTemplates)
+      .set({ ...template, updatedAt: new Date() })
+      .where(eq(notificationTemplates.id, id))
+      .returning();
+    return updatedTemplate;
+  }
+
+  async deleteNotificationTemplate(id: string): Promise<void> {
+    await db.delete(notificationTemplates).where(eq(notificationTemplates.id, id));
   }
 }
 

@@ -466,7 +466,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Don't fail the borrowing process if email fails
       }
       
-      res.json({ success: true });
+      // Get notification template for borrowing
+      const template = await storage.getNotificationTemplateByType('borrow');
+      
+      res.json({ 
+        success: true,
+        notification: template || null
+      });
     } catch (error) {
       console.error("Error borrowing item:", error);
       res.status(500).json({ message: "Failed to borrow item" });
@@ -595,7 +601,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Don't fail the purchase process if email fails
       }
       
-      res.json(purchase);
+      // Get notification template for purchase
+      const template = await storage.getNotificationTemplateByType('purchase');
+      
+      res.json({
+        ...purchase,
+        notification: template || null
+      });
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid purchase data", errors: error.errors });
@@ -741,6 +753,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
       timestamp: new Date().toISOString(),
       version: process.env.npm_package_version || "1.0.0"
     });
+  });
+
+  // Notification Templates Routes
+  app.get("/api/notification-templates", isAuthenticated, async (req, res) => {
+    try {
+      const templates = await storage.getAllNotificationTemplates();
+      res.json(templates);
+    } catch (error) {
+      console.error("Error fetching notification templates:", error);
+      res.status(500).json({ message: "Failed to fetch notification templates" });
+    }
+  });
+
+  app.get("/api/notification-templates/:type", isAuthenticated, async (req, res) => {
+    try {
+      const template = await storage.getNotificationTemplateByType(req.params.type);
+      res.json(template);
+    } catch (error) {
+      console.error("Error fetching notification template:", error);
+      res.status(500).json({ message: "Failed to fetch notification template" });
+    }
+  });
+
+  app.post("/api/notification-templates", isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.id);
+      if (currentUser?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const template = await storage.createNotificationTemplate(req.body);
+      res.json(template);
+    } catch (error) {
+      console.error("Error creating notification template:", error);
+      res.status(500).json({ message: "Failed to create notification template" });
+    }
+  });
+
+  app.patch("/api/notification-templates/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.id);
+      if (currentUser?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const template = await storage.updateNotificationTemplate(req.params.id, req.body);
+      res.json(template);
+    } catch (error) {
+      console.error("Error updating notification template:", error);
+      res.status(500).json({ message: "Failed to update notification template" });
+    }
+  });
+
+  app.delete("/api/notification-templates/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.id);
+      if (currentUser?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      await storage.deleteNotificationTemplate(req.params.id);
+      res.json({ message: "Template deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting notification template:", error);
+      res.status(500).json({ message: "Failed to delete notification template" });
+    }
   });
 
   const httpServer = createServer(app);
