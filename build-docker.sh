@@ -9,36 +9,30 @@ echo "🏗️  Building WorkshopTracker for Docker deployment..."
 # Clean previous builds
 echo "🧹 Cleaning previous builds..."
 rm -rf dist
-rm -rf node_modules/.vite-temp
+rm -rf node_modules
 rm -rf .vite
 
 # Stop existing containers
 echo "🛑 Stopping existing containers..."
-docker-compose down -v 2>/dev/null || true
+docker compose down
 
-# Install dependencies
-echo "📦 Installing dependencies..."
-npm ci
+# Start database
+docker compose up db -d
 
 # Build application
 echo "🔨 Building application..."
-npm run build
+docker compose build app --no-cache
 
-# Build Docker image
-echo "🐳 Building Docker image..."
-docker build -t workshoptracker:latest .
+# Copy build files for IDE usage
+docker compose cp app:/app/dist ./dist
+docker compose cp app:/app/node_modules ./node_modules
 
-# Start with fresh database
-echo "🚀 Starting services..."
-docker-compose up -d
-
-# Wait for services to be ready
-echo "⏳ Waiting for services to start..."
-sleep 10
+# Start application
+docker compose up -d
 
 # Show logs
 echo "📋 Service status:"
-docker-compose ps
+docker compose ps
 
 echo ""
 echo "✅ Docker deployment completed successfully!"
@@ -47,7 +41,7 @@ echo "🌐 Access the application at: http://localhost:5000"
 echo "🔑 Default admin credentials: admin / admin123"
 echo ""
 echo "📊 Check logs with:"
-echo "  docker-compose logs -f app"
+echo "  docker compose logs -f app"
 echo ""
 echo "🛠️  Access database with:"
-echo "  docker-compose exec postgres psql -U workshop -d workshoptracker"
+echo "  docker compose exec postgres psql -U workshop -d workshoptracker"

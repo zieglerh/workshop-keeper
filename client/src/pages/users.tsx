@@ -97,14 +97,14 @@ export default function Users() {
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
       queryClient.invalidateQueries({ queryKey: ["/api/users/pending"] });
       toast({
-        title: "Erfolgreich",
-        description: "Benutzerrolle wurde aktualisiert",
+        title: "Success",
+        description: "User role updated successfully",
       });
     },
     onError: (error: Error) => {
       toast({
-        title: "Fehler",
-        description: error.message || "Fehler beim Aktualisieren der Benutzerrolle",
+        title: "Error",
+        description: error.message || "Error updating user role",
         variant: "destructive",
       });
     },
@@ -118,14 +118,14 @@ export default function Users() {
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
       queryClient.invalidateQueries({ queryKey: ["/api/users/pending"] });
       toast({
-        title: "Benutzer freigeschaltet",
-        description: "Der Benutzer wurde erfolgreich aktiviert",
+        title: "User approved",
+        description: "User has been successfully activated",
       });
     },
     onError: (error: Error) => {
       toast({
-        title: "Fehler",
-        description: error.message || "Fehler beim Freischalten des Benutzers",
+        title: "Error",
+        description: error.message || "Error approving user",
         variant: "destructive",
       });
     },
@@ -139,14 +139,14 @@ export default function Users() {
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
       setEditUser(null);
       toast({
-        title: "Benutzer aktualisiert",
-        description: "Die Benutzerdaten wurden erfolgreich aktualisiert",
+        title: "User updated",
+        description: "User data has been successfully updated",
       });
     },
     onError: (error: Error) => {
       toast({
-        title: "Fehler",
-        description: error.message || "Fehler beim Aktualisieren des Benutzers",
+        title: "Error",
+        description: error.message || "Error updating user",
         variant: "destructive",
       });
     },
@@ -160,14 +160,14 @@ export default function Users() {
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
       queryClient.invalidateQueries({ queryKey: ["/api/users/pending"] });
       toast({
-        title: "Benutzer gelöscht",
-        description: "Der Benutzer wurde erfolgreich gelöscht",
+        title: "User deleted",
+        description: "User has been successfully deleted",
       });
     },
     onError: (error: Error) => {
       toast({
-        title: "Fehler",
-        description: error.message || "Fehler beim Löschen des Benutzers",
+        title: "Error",
+        description: error.message || "Error deleting user",
         variant: "destructive",
       });
     },
@@ -198,7 +198,7 @@ export default function Users() {
         <Alert className="max-w-md">
           <Shield className="h-4 w-4" />
           <AlertDescription>
-            Sie haben keine Berechtigung, diese Seite anzuzeigen. Nur Administratoren können Benutzer verwalten.
+            You do not have permission to view this page. Only administrators can manage users.
           </AlertDescription>
         </Alert>
       </div>
@@ -210,9 +210,9 @@ export default function Users() {
       case 'admin':
         return <Badge variant="destructive"><Shield className="w-3 h-3 mr-1" />Administrator</Badge>;
       case 'user':
-        return <Badge variant="secondary"><User className="w-3 h-3 mr-1" />Benutzer</Badge>;
+        return <Badge variant="secondary"><User className="w-3 h-3 mr-1" />User</Badge>;
       case 'pending':
-        return <Badge variant="outline"><Clock className="w-3 h-3 mr-1" />Wartend</Badge>;
+        return <Badge variant="outline"><Clock className="w-3 h-3 mr-1" />Pending</Badge>;
       default:
         return <Badge variant="outline">{role}</Badge>;
     }
@@ -229,9 +229,9 @@ export default function Users() {
             <div>
               <h1 className="text-3xl font-bold tracking-tight flex items-center">
                 <UsersIcon className="mr-3 h-8 w-8" />
-                Benutzerverwaltung
+                User Management
               </h1>
-              <p className="text-muted-foreground">Verwalten Sie Benutzerkonten und Berechtigungen</p>
+              <p className="text-muted-foreground">Manage user accounts and permissions</p>
             </div>
             <Button
               onClick={handleLogout}
@@ -239,7 +239,7 @@ export default function Users() {
               size="sm"
             >
               <LogOut className="mr-2 h-4 w-4" />
-              Abmelden
+              Sign Out
             </Button>
           </div>
         </div>
@@ -249,14 +249,14 @@ export default function Users() {
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="pending" className="flex items-center space-x-2">
                 <Clock className="w-4 h-4" />
-                <span>Wartende Freischaltungen</span>
+                <span>Pending Approvals</span>
                 {pendingUsers.length > 0 && (
                   <Badge variant="destructive" className="ml-2">{pendingUsers.length}</Badge>
                 )}
               </TabsTrigger>
               <TabsTrigger value="active" className="flex items-center space-x-2">
                 <UserCheck className="w-4 h-4" />
-                <span>Aktive Benutzer</span>
+                <span>Active Users</span>
                 <Badge variant="secondary" className="ml-2">{activeUsers.length}</Badge>
               </TabsTrigger>
             </TabsList>
@@ -266,10 +266,10 @@ export default function Users() {
                 <CardHeader>
                   <CardTitle className="flex items-center">
                     <Clock className="mr-2 h-5 w-5" />
-                    Wartende Registrierungen
+                    Pending Registrations
                   </CardTitle>
                   <CardDescription>
-                    Neue Benutzer, die auf Admin-Freischaltung warten
+                    New users waiting for admin approval
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -280,7 +280,7 @@ export default function Users() {
                   ) : pendingUsers.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">
                       <UserCheck className="mx-auto h-12 w-12 mb-4 opacity-50" />
-                      <p>Keine wartenden Registrierungen</p>
+                      <p>No pending registrations</p>
                     </div>
                   ) : (
                     <div className="space-y-4">
@@ -300,7 +300,7 @@ export default function Users() {
                                   <p className="text-sm text-muted-foreground">{pendingUser.email}</p>
                                 )}
                                 <p className="text-xs text-muted-foreground">
-                                  Registriert: {format(new Date(pendingUser.createdAt!), 'dd.MM.yyyy HH:mm')}
+                                  Registered: {format(new Date(pendingUser.createdAt!), 'dd.MM.yyyy HH:mm')}
                                 </p>
                               </div>
                             </div>
@@ -312,7 +312,7 @@ export default function Users() {
                               disabled={activateUserMutation.isPending}
                             >
                               <UserCheck className="w-4 h-4 mr-1" />
-                              Als Benutzer freischalten
+                              Approve as User
                             </Button>
                             <Button
                               size="sm"
@@ -321,7 +321,7 @@ export default function Users() {
                               disabled={activateUserMutation.isPending}
                             >
                               <Shield className="w-4 h-4 mr-1" />
-                              Als Admin freischalten
+                              Approve as Admin
                             </Button>
                           </div>
                         </div>
@@ -337,10 +337,10 @@ export default function Users() {
                 <CardHeader>
                   <CardTitle className="flex items-center">
                     <UserCheck className="mr-2 h-5 w-5" />
-                    Aktive Benutzer
+                    Active Users
                   </CardTitle>
                   <CardDescription>
-                    Alle aktiven Benutzerkonten mit ihren Rollen
+                    All active user accounts with their roles
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -351,7 +351,7 @@ export default function Users() {
                   ) : activeUsers.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">
                       <UsersIcon className="mx-auto h-12 w-12 mb-4 opacity-50" />
-                      <p>Keine aktiven Benutzer</p>
+                      <p>No active users</p>
                     </div>
                   ) : (
                     <div className="space-y-4">
@@ -378,13 +378,12 @@ export default function Users() {
                                   <p className="text-sm text-muted-foreground">{activeUser.email}</p>
                                 )}
                                 <p className="text-xs text-muted-foreground">
-                                  Erstellt: {format(new Date(activeUser.createdAt!), 'dd.MM.yyyy HH:mm')}
+                                  Created: {format(new Date(activeUser.createdAt!), 'dd.MM.yyyy HH:mm')}
                                 </p>
                               </div>
                             </div>
                           </div>
-                          {activeUser.id !== user?.id && (
-                            <div className="flex items-center space-x-2">
+                          <div className="flex items-center space-x-2">
                               <Dialog>
                                 <DialogTrigger asChild>
                                   <Button
@@ -393,45 +392,45 @@ export default function Users() {
                                     onClick={() => handleEditUser(activeUser)}
                                   >
                                     <Edit className="w-4 h-4 mr-1" />
-                                    Bearbeiten
+                                    Edit
                                   </Button>
                                 </DialogTrigger>
                                 <DialogContent>
                                   <DialogHeader>
-                                    <DialogTitle>Benutzer bearbeiten</DialogTitle>
+                                    <DialogTitle>Edit User</DialogTitle>
                                     <DialogDescription>
-                                      Ändern Sie die Benutzerdaten von @{editUser?.username}
+                                      Change user data for @{editUser?.username}
                                     </DialogDescription>
                                   </DialogHeader>
                                   <div className="space-y-4">
                                     <div className="grid grid-cols-2 gap-4">
                                       <div className="space-y-2">
-                                        <Label htmlFor="editFirstName">Vorname</Label>
+                                        <Label htmlFor="editFirstName">First Name</Label>
                                         <Input
                                           id="editFirstName"
                                           value={editData.firstName}
                                           onChange={(e) => setEditData(prev => ({ ...prev, firstName: e.target.value }))}
-                                          placeholder="Vorname"
+                                          placeholder="First name"
                                         />
                                       </div>
                                       <div className="space-y-2">
-                                        <Label htmlFor="editLastName">Nachname</Label>
+                                        <Label htmlFor="editLastName">Last Name</Label>
                                         <Input
                                           id="editLastName"
                                           value={editData.lastName}
                                           onChange={(e) => setEditData(prev => ({ ...prev, lastName: e.target.value }))}
-                                          placeholder="Nachname"
+                                          placeholder="Last name"
                                         />
                                       </div>
                                     </div>
                                     <div className="space-y-2">
-                                      <Label htmlFor="editEmail">E-Mail</Label>
+                                      <Label htmlFor="editEmail">Email</Label>
                                       <Input
                                         id="editEmail"
                                         type="email"
                                         value={editData.email}
                                         onChange={(e) => setEditData(prev => ({ ...prev, email: e.target.value }))}
-                                        placeholder="E-Mail-Adresse"
+                                        placeholder="Email address"
                                       />
                                     </div>
                                   </div>
@@ -440,7 +439,7 @@ export default function Users() {
                                       onClick={handleSaveEdit}
                                       disabled={editUserMutation.isPending}
                                     >
-                                      {editUserMutation.isPending ? 'Speichern...' : 'Speichern'}
+                                      {editUserMutation.isPending ? 'Saving...' : 'Save'}
                                     </Button>
                                   </DialogFooter>
                                 </DialogContent>
@@ -455,7 +454,7 @@ export default function Users() {
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="user">Benutzer</SelectItem>
+                                  <SelectItem value="user">User</SelectItem>
                                   <SelectItem value="admin">Administrator</SelectItem>
                                 </SelectContent>
                               </Select>
@@ -467,31 +466,30 @@ export default function Users() {
                                     variant="destructive"
                                   >
                                     <Trash2 className="w-4 h-4 mr-1" />
-                                    Löschen
+                                    Delete
                                   </Button>
                                 </AlertDialogTrigger>
                                 <AlertDialogContent>
                                   <AlertDialogHeader>
-                                    <AlertDialogTitle>Benutzer löschen?</AlertDialogTitle>
+                                    <AlertDialogTitle>Delete User?</AlertDialogTitle>
                                     <AlertDialogDescription>
-                                      Sind Sie sicher, dass Sie den Benutzer "@{activeUser.username}" löschen möchten?
-                                      Diese Aktion kann nicht rückgängig gemacht werden.
+                                      Are you sure you want to delete user "@{activeUser.username}"?
+                                      This action cannot be undone.
                                     </AlertDialogDescription>
                                   </AlertDialogHeader>
                                   <AlertDialogFooter>
-                                    <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
                                     <AlertDialogAction
                                       onClick={() => deleteUserMutation.mutate(activeUser.id)}
                                       className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                       disabled={deleteUserMutation.isPending}
                                     >
-                                      {deleteUserMutation.isPending ? 'Wird gelöscht...' : 'Ja, löschen'}
+                                      {deleteUserMutation.isPending ? 'Deleting...' : 'Yes, delete'}
                                     </AlertDialogAction>
                                   </AlertDialogFooter>
                                 </AlertDialogContent>
                               </AlertDialog>
                             </div>
-                          )}
                         </div>
                       ))}
                     </div>
