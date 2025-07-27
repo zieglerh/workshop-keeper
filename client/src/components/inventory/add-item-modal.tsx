@@ -204,45 +204,73 @@ export default function AddItemModal({ isOpen, onClose, categories }: AddItemMod
   };
 
   const handleGoogleShoppingSelect = async (item: any) => {
-    // Set item name
-    if (item.title) {
-      form.setValue("name", item.title);
-    }
-    
-    // Set description - use API description if available, otherwise fallback to source info
-    if (item.description) {
-      form.setValue("description", item.description);
-    } else {
-      let description = `Gefunden in: ${item.source || 'Unbekannter Shop'}`;
-      if (item.price) {
-        description += `\nPreis: ${item.price}`;
-      }
-      if (item.rating) {
-        description += `\nBewertung: ${item.rating}/5`;
-        if (item.reviews) {
-          description += ` (${item.reviews} Bewertungen)`;
+    try {
+      // First, try to get detailed product information from API
+      let productDescription = "";
+      
+      if (item.link) {
+        try {
+          const detailResponse = await apiRequest('POST', '/api/get-product-details', {
+            productLink: item.link
+          });
+          
+          if (detailResponse.description) {
+            productDescription = detailResponse.description;
+          }
+        } catch (error) {
+          console.log('Could not fetch detailed product info, using basic data');
         }
       }
-      form.setValue("description", description);
-    }
-    
-    // Set price for purchasable items
-    if (item.price) {
-      const priceValue = parseFloat(item.price.replace(/[^\d.,]/g, '').replace(',', '.'));
-      if (!isNaN(priceValue)) {
-        setIsPurchasable(true);
-        setTotalCost(priceValue.toString());
-        handleTotalCostChange(priceValue.toString());
+      
+      // Set item name
+      if (item.title) {
+        form.setValue("name", item.title);
       }
+      
+      // Set description - prefer API description, otherwise fallback to source info
+      if (productDescription) {
+        form.setValue("description", productDescription);
+      } else if (item.description) {
+        form.setValue("description", item.description);
+      } else {
+        let description = `Gefunden in: ${item.source || 'Unbekannter Shop'}`;
+        if (item.price) {
+          description += `\nPreis: ${item.price}`;
+        }
+        if (item.rating) {
+          description += `\nBewertung: ${item.rating}/5`;
+          if (item.reviews) {
+            description += ` (${item.reviews} Bewertungen)`;
+          }
+        }
+        form.setValue("description", description);
+      }
+      
+      // Set price for purchasable items
+      if (item.price) {
+        const priceValue = parseFloat(item.price.replace(/[^\d.,]/g, '').replace(',', '.'));
+        if (!isNaN(priceValue)) {
+          setIsPurchasable(true);
+          setTotalCost(priceValue.toString());
+          handleTotalCostChange(priceValue.toString());
+        }
+      }
+      
+      // Set image from thumbnail - only set URL, don't trigger download
+      if (item.thumbnail) {
+        form.setValue("imageUrl", item.thumbnail);
+        setUploadedImage(item.thumbnail);
+      }
+      
+      setShowGoogleShopping(false);
+    } catch (error) {
+      console.error('Error processing Google Shopping selection:', error);
+      toast({
+        title: "Fehler",
+        description: "Fehler beim Verarbeiten der Produktauswahl",
+        variant: "destructive",
+      });
     }
-    
-    // Set image from thumbnail - only set URL, don't trigger download
-    if (item.thumbnail) {
-      form.setValue("imageUrl", item.thumbnail);
-      setUploadedImage(item.thumbnail);
-    }
-    
-    setShowGoogleShopping(false);
   };
 
 
