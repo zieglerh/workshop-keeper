@@ -10,7 +10,6 @@ const navigation = [
   { name: "Borrowing", href: "/borrowing", icon: RefreshCw },
   { name: "Sales", href: "/sales", icon: ShoppingCart },
   { name: "Users", href: "/users", icon: Users, adminOnly: true },
-  { name: "Profile", href: "/profile", icon: User },
 ];
 
 export default function Sidebar() {
@@ -22,7 +21,7 @@ export default function Sidebar() {
   );
 
   return (
-    <aside className="w-64 bg-surface shadow-material-lg fixed h-full z-10 lg:relative">
+    <aside className="w-64 bg-surface shadow-material-lg fixed h-full z-10 lg:relative flex flex-col">
       <div className="p-6 border-b border-gray-200">
         <div className="flex items-center space-x-3">
           <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
@@ -35,7 +34,7 @@ export default function Sidebar() {
         </div>
       </div>
       
-      <nav className="p-4 space-y-2">
+      <nav className="p-4 space-y-2 flex-1">
         {filteredNavigation.map((item) => (
           <button
             key={item.name}
@@ -53,7 +52,7 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-surface">
+      <div className="p-4 border-t border-gray-200 bg-surface mt-auto">
         <button
           onClick={() => setLocation('/profile')}
           className="flex items-center space-x-3 w-full text-left hover:bg-gray-50 rounded-lg p-2 transition-colors group"
@@ -77,7 +76,7 @@ export default function Sidebar() {
               {user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : user?.username}
             </p>
             <p className="text-xs text-gray-500">
-              {user?.role === 'admin' ? 'Administrator' : 'User'} • Click to edit profile
+              {user?.role === 'admin' ? 'Administrator' : 'User'}
             </p>
           </div>
           <User className="h-4 w-4 text-gray-400 group-hover:text-primary" />
