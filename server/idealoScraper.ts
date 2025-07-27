@@ -15,25 +15,52 @@ export async function extractIdealoProduct(url: string): Promise<IdealoProductDe
   try {
     console.log('Fetching Idealo product page:', url);
     
-    // Fetch the page with proper headers
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'Accept-Language': 'de-DE,de;q=0.9,en;q=0.8',
-        'Accept-Encoding': 'gzip, deflate, br',
-        'DNT': '1',
-        'Connection': 'keep-alive',
-        'Upgrade-Insecure-Requests': '1',
+    // Add timeout and retry logic
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    
+    try {
+      // Fetch the page with proper headers and timeout
+      const response = await fetch(url, {
+        signal: controller.signal,
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+          'Accept-Language': 'de-DE,de;q=0.9,en;q=0.8',
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+        }
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-    });
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const html = await response.text();
+      console.log('HTML content length:', html.length);
+      
+      // If we get very little content, the page might be blocked
+      if (html.length < 1000) {
+        throw new Error('Page content too small, possibly blocked');
+      }
+    } catch (fetchError: any) {
+      clearTimeout(timeoutId);
+      
+      // If direct fetch fails, return a manual input fallback
+      if (fetchError.name === 'AbortError' || fetchError.code === 'ETIMEDOUT') {
+        console.log('Fetch timed out, returning manual input prompt');
+        return {
+          title: 'Manual Input Required',
+          specifications: {
+            'Note': 'Direct extraction failed due to network restrictions. Please enter product details manually.',
+            'URL': url
+          }
+        };
+      }
+      throw fetchError;
     }
-
-    const html = await response.text();
-    console.log('HTML content length:', html.length);
     
     const $ = cheerio.load(html);
     
@@ -139,6 +166,19 @@ export async function extractIdealoProduct(url: string): Promise<IdealoProductDe
     
   } catch (error: any) {
     console.error('Error scraping Idealo product:', error);
+    
+    // For network errors, return a helpful fallback response
+    if (error.code === 'ETIMEDOUT' || error.name === 'AbortError' || error.message?.includes('fetch failed')) {
+      return {
+        title: 'Manual Input Required',
+        specifications: {
+          'Note': 'Network timeout occurred. Idealo may be blocking automated requests. Please copy product details manually from the website.',
+          'URL': url,
+          'Suggestion': 'Visit the Idealo page, copy the product name, price, and specifications, then paste them into the form manually.'
+        }
+      };
+    }
+    
     throw new Error(`Failed to extract product details: ${error?.message || 'Unknown error'}`);
   }
 }

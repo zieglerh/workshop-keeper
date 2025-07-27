@@ -150,6 +150,18 @@ export default function IdealoImportModal({ isOpen, onClose, onImportProduct }: 
             <div className="space-y-4 p-4 border rounded-lg bg-gray-50 dark:bg-gray-900">
               <h3 className="font-semibold text-lg">{extractedProduct.title}</h3>
               
+              {extractedProduct.title === 'Manual Input Required' && (
+                <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4">
+                  <div className="flex items-center gap-2 text-yellow-800 dark:text-yellow-200">
+                    <Info className="h-4 w-4" />
+                    <span className="font-medium">Automatische Extraktion fehlgeschlagen</span>
+                  </div>
+                  <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-2">
+                    Die Website blockiert direkte Zugriffe. Sie können die Produktdetails manuell aus der Idealo-Seite kopieren und in das Formular einfügen.
+                  </p>
+                </div>
+              )}
+              
               {extractedProduct.price && (
                 <div className="flex items-center gap-2">
                   <span className="font-medium">Preis:</span>
@@ -196,10 +208,16 @@ export default function IdealoImportModal({ isOpen, onClose, onImportProduct }: 
               )}
 
               <div className="flex gap-2 pt-4">
-                <Button onClick={handleImport} className="flex-1">
-                  <Package className="h-4 w-4 mr-2" />
-                  Produkt importieren
-                </Button>
+                {extractedProduct.title !== 'Manual Input Required' ? (
+                  <Button onClick={handleImport} className="flex-1">
+                    <Package className="h-4 w-4 mr-2" />
+                    Produkt importieren
+                  </Button>
+                ) : (
+                  <Button onClick={handleClose} className="flex-1">
+                    Manuell eingeben
+                  </Button>
+                )}
                 <Button variant="outline" onClick={handleClose}>
                   Abbrechen
                 </Button>
