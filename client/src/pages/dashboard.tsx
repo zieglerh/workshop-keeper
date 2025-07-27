@@ -207,15 +207,15 @@ export default function Dashboard() {
         />
       )}
 
+      {/* Google Shopping Modal */}
       {showGoogleShoppingModal && (
         <GoogleShoppingModal
           isOpen={showGoogleShoppingModal}
           onClose={() => setShowGoogleShoppingModal(false)}
           onSelectItem={(item) => {
-            // Open Add Item Modal with pre-filled data from Google Shopping
+            // Close Google Shopping modal and open Add Item modal
             setShowGoogleShoppingModal(false);
             setShowAddModal(true);
-            // TODO: Pre-fill the form with selected item data
           }}
         />
       )}

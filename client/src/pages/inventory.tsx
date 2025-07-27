@@ -7,17 +7,19 @@ import Sidebar from "@/components/layout/sidebar";
 import Header from "@/components/layout/header";
 import ItemCard from "@/components/inventory/item-card";
 import AddItemModal from "@/components/inventory/add-item-modal";
+import GoogleShoppingModal from "@/components/inventory/google-shopping-modal";
 import UserNotification from "@/components/notifications/user-notification";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Filter, ShoppingBag, Search } from "lucide-react";
+import { Filter, ShoppingBag, Search, Package } from "lucide-react";
 import type { InventoryItemWithRelations, Category } from "@shared/schema";
 
 export default function Inventory() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showGoogleShoppingModal, setShowGoogleShoppingModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [showAvailableOnly, setShowAvailableOnly] = useState(false);
@@ -135,6 +137,27 @@ export default function Inventory() {
             </div>
           </div>
 
+          {/* Action Buttons for Admin */}
+          {user?.role === 'admin' && (
+            <div className="flex gap-4 mb-6">
+              <Button 
+                onClick={() => setShowAddModal(true)}
+                className="flex items-center gap-2"
+              >
+                <Package className="h-4 w-4" />
+                Add New Item
+              </Button>
+              <Button 
+                onClick={() => setShowGoogleShoppingModal(true)}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <ShoppingBag className="h-4 w-4" />
+                Add Google Item
+              </Button>
+            </div>
+          )}
+
           {/* Inventory Grid */}
           {inventoryLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -176,6 +199,19 @@ export default function Inventory() {
           )}
         </div>
       </main>
+
+      {/* Google Shopping Modal */}
+      {showGoogleShoppingModal && (
+        <GoogleShoppingModal
+          isOpen={showGoogleShoppingModal}
+          onClose={() => setShowGoogleShoppingModal(false)}
+          onSelectItem={(item) => {
+            // Close Google Shopping modal and open Add Item modal
+            setShowGoogleShoppingModal(false);
+            setShowAddModal(true);
+          }}
+        />
+      )}
 
       {showAddModal && (
         <AddItemModal
