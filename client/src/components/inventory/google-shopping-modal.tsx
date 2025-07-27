@@ -226,22 +226,36 @@ export default function GoogleShoppingModal({ isOpen, onClose, onSelectItem }: G
                               )}
                             </div>
 
-                            {item.link && (
-                              <div className="mt-2">
+                            <div className="mt-2">
+                              {item.link && item.link.trim() !== '' ? (
                                 <Button
                                   variant="ghost"
                                   size="sm"
                                   className="h-6 px-2 text-xs"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    window.open(item.link, '_blank');
+                                    window.open(item.link, '_blank', 'noopener,noreferrer');
                                   }}
                                 >
                                   <ExternalLink className="h-3 w-3 mr-1" />
                                   Im Shop ansehen
                                 </Button>
-                              </div>
-                            )}
+                              ) : (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 px-2 text-xs"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const searchQuery = encodeURIComponent(`${item.title} ${item.source}`);
+                                    window.open(`https://google.de/search?q=${searchQuery}`, '_blank', 'noopener,noreferrer');
+                                  }}
+                                >
+                                  <Search className="h-3 w-3 mr-1" />
+                                  Auf Google suchen
+                                </Button>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </CardContent>
