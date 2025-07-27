@@ -154,14 +154,14 @@ export default function GoogleShoppingModal({ isOpen, onClose, onSelectItem }: G
           </div>
 
           {/* Search Results */}
-          {searchResults.length > 0 && (
+          {searchResults && searchResults.length > 0 && (
             <div className="flex-1 overflow-hidden">
               <h3 className="text-lg font-semibold mb-3">
-                Suchergebnisse ({searchResults.length})
+                Suchergebnisse ({searchResults ? searchResults.length : 0})
               </h3>
               <ScrollArea className="h-[500px] pr-4">
                 <div className="space-y-3">
-                  {searchResults.map((item, index) => (
+                  {searchResults && searchResults.map((item, index) => (
                     <Card key={index} className="cursor-pointer hover:shadow-md transition-shadow border-2 hover:border-primary/20">
                       <CardContent className="p-4" onClick={() => handleSelectItem(item)}>
                         <div className="flex space-x-4">
@@ -250,7 +250,7 @@ export default function GoogleShoppingModal({ isOpen, onClose, onSelectItem }: G
           )}
 
           {/* Empty State */}
-          {!searchMutation.isPending && searchResults.length === 0 && searchQuery && (
+          {!searchMutation.isPending && (!searchResults || searchResults.length === 0) && searchQuery && (
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center text-gray-500">
                 <Search className="h-12 w-12 mx-auto mb-4 opacity-50" />
