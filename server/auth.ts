@@ -34,23 +34,33 @@ export async function setupAuth(app: Express) {
   app.post("/api/login", async (req, res) => {
     const { username, password } = req.body;
     
+    console.log(`Login attempt for username: ${username}`);
+    
     if (!username || !password) {
+      console.log("Missing username or password");
       return res.status(400).json({ message: "Benutzername und Passwort sind erforderlich" });
     }
 
     try {
       const user = await storage.getUserByUsername(username);
       if (!user) {
+        console.log(`User not found: ${username}`);
         return res.status(401).json({ message: "Ungültiger Benutzername oder Passwort" });
       }
 
+      console.log(`User found: ${user.id}, checking password...`);
+      
       const isValidPassword = await bcrypt.compare(password, user.passwordHash);
+      console.log(`Password valid: ${isValidPassword}`);
+      
       if (!isValidPassword) {
+        console.log("Invalid password");
         return res.status(401).json({ message: "Ungültiger Benutzername oder Passwort" });
       }
 
       // Check if user is pending approval
       if (user.role === 'pending') {
+        console.log(`User ${username} is pending approval`);
         return res.status(403).json({ message: "Ihr Konto wartet noch auf Admin-Freischaltung" });
       }
 
@@ -64,6 +74,8 @@ export async function setupAuth(app: Express) {
         lastName: user.lastName,
       };
 
+      console.log(`Login successful for ${username}`);
+      
       res.json({ 
         success: true, 
         user: {
@@ -77,6 +89,10 @@ export async function setupAuth(app: Express) {
       });
     } catch (error) {
       console.error("Login error:", error);
+      console.error("Error details:", {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
+      });
       res.status(500).json({ message: "Anmeldung fehlgeschlagen" });
     }
   });
