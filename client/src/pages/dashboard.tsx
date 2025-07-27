@@ -28,8 +28,8 @@ export default function Dashboard() {
       await apiRequest('POST', '/api/logout');
       
       toast({
-        title: "Erfolgreich abgemeldet",
-        description: "Auf Wiedersehen!",
+        title: "Successfully signed out",
+        description: "Goodbye!",
       });
       
       // Reload page to trigger auth state update
@@ -37,8 +37,8 @@ export default function Dashboard() {
     } catch (error) {
       console.error('Logout error:', error);
       toast({
-        title: "Fehler beim Abmelden",
-        description: "Es gab ein Problem beim Abmelden",
+        title: "Error signing out",
+        description: "There was a problem signing out",
         variant: "destructive",
       });
     }
@@ -102,12 +102,12 @@ export default function Dashboard() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-              <p className="text-muted-foreground">Willkommen zurück! Hier ist Ihre Workshop-Übersicht.</p>
+              <p className="text-muted-foreground">Welcome back! Here's your workshop overview.</p>
             </div>
             <div className="flex items-center space-x-4">
               {user?.role === 'admin' && (
                 <Button onClick={() => setShowAddModal(true)}>
-                  Neues Element hinzufügen
+                  Add New Item
                 </Button>
               )}
               <Button
@@ -116,7 +116,7 @@ export default function Dashboard() {
                 size="sm"
               >
                 <LogOut className="mr-2 h-4 w-4" />
-                Abmelden
+                Sign Out
               </Button>
             </div>
           </div>

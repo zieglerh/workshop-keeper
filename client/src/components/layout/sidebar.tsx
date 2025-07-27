@@ -10,7 +10,7 @@ const navigation = [
   { name: "Borrowing", href: "/borrowing", icon: RefreshCw },
   { name: "Sales", href: "/sales", icon: ShoppingCart },
   { name: "Users", href: "/users", icon: Users, adminOnly: true },
-  { name: "Profil", href: "/profile", icon: User },
+  { name: "Profile", href: "/profile", icon: User },
 ];
 
 export default function Sidebar() {

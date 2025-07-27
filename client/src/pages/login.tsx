@@ -26,8 +26,8 @@ export default function Login() {
       await apiRequest('POST', '/api/login', { username, password });
 
       toast({
-        title: "Erfolgreich angemeldet",
-        description: "Willkommen zurück!",
+        title: "Successfully signed in",
+        description: "Welcome back!",
       });
 
       // Redirect to dashboard
@@ -35,7 +35,7 @@ export default function Login() {
       window.location.reload(); // Force reload to update auth state
     } catch (error: any) {
       console.error('Login error:', error);
-      setError(error.message || 'Anmeldung fehlgeschlagen');
+      setError(error.message || 'Sign in failed');
     } finally {
       setIsLoading(false);
     }
@@ -50,9 +50,9 @@ export default function Login() {
               <Wrench className="h-8 w-8 text-primary" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold">Workshop Verwaltung</CardTitle>
+          <CardTitle className="text-2xl font-bold">Workshop Management</CardTitle>
           <CardDescription>
-            Melden Sie sich an, um auf Ihr Inventar zuzugreifen
+            Sign in to access your inventory
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -64,7 +64,7 @@ export default function Login() {
             )}
             
             <div className="space-y-2">
-              <Label htmlFor="username">Benutzername</Label>
+              <Label htmlFor="username">Username</Label>
               <Input
                 id="username"
                 type="text"
@@ -72,12 +72,12 @@ export default function Login() {
                 onChange={(e) => setUsername(e.target.value)}
                 required
                 disabled={isLoading}
-                placeholder="Ihr Benutzername"
+                placeholder="Your username"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Passwort</Label>
+              <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
                 type="password"
@@ -85,7 +85,7 @@ export default function Login() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={isLoading}
-                placeholder="Ihr Passwort"
+                placeholder="Your password"
               />
             </div>
 
@@ -97,12 +97,12 @@ export default function Login() {
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Anmelden...
+                  Signing in...
                 </>
               ) : (
                 <>
                   <LogIn className="mr-2 h-4 w-4" />
-                  Anmelden
+                  Sign In
                 </>
               )}
             </Button>
@@ -114,15 +114,11 @@ export default function Login() {
               onClick={() => setLocation('/register')}
               disabled={isLoading}
             >
-              Noch kein Konto? Registrieren
+              Don't have an account? Register
             </Button>
           </div>
 
-          <div className="mt-4 text-center text-sm text-muted-foreground">
-            <p className="mb-2">Standard-Admin-Anmeldung:</p>
-            <p><strong>Benutzername:</strong> admin</p>
-            <p><strong>Passwort:</strong> admin123</p>
-          </div>
+
         </CardContent>
       </Card>
     </div>

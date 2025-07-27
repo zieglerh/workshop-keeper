@@ -35,16 +35,16 @@ export default function Users() {
       await apiRequest('POST', '/api/logout');
       
       toast({
-        title: "Erfolgreich abgemeldet",
-        description: "Auf Wiedersehen!",
+        title: "Successfully signed out",
+        description: "Goodbye!",
       });
       
       window.location.reload();
     } catch (error) {
       console.error('Logout error:', error);
       toast({
-        title: "Fehler beim Abmelden",
-        description: "Es gab ein Problem beim Abmelden",
+        title: "Error signing out",
+        description: "There was a problem signing out",
         variant: "destructive",
       });
     }
