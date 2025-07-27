@@ -47,7 +47,7 @@ Extrahiere/Erstelle:
 - name: Produktname (basierend auf URL-Segmenten)
 - category: Eine der verfügbaren Kategorien (exakt wie oben aufgelistet, am besten passend)
 - description: Realistische deutsche Produktbeschreibung (2-3 Sätze)
-- image: Platzhalter-URL (verwende: "https://via.placeholder.com/300x300?text=Produkt")
+- image: Verwende die Url aus dem Header
 - price: Realistischer Preis in Euro (z.B. "29.99")
 - quantity: Standardmenge (meist 1, außer bei Packungen)
 
@@ -55,6 +55,7 @@ Beispiel für "spax-schrauben":
 - name: "SPAX Universalschrauben 4x60mm"
 - category: "Material & Supply - Consumables"
 - description: "Hochwertige SPAX Universalschrauben mit T-STAR plus Antrieb. Ideal für Holzverbindungen und vielseitige Befestigungsarbeiten."
+- image: https://cdn.idealo.com/folder/Product/5295/5/5295589/s1_produktbild_gross/spax-4x60-t-star-t20-500-st-191010400603.jpg
 
 Antworte nur mit gültigem JSON in diesem Format:
 {
@@ -96,7 +97,7 @@ Antworte nur mit gültigem JSON in diesem Format:
       name: extractedData.name,
       category: extractedData.category,
       description: extractedData.description || '',
-      image: extractedData.image || 'https://via.placeholder.com/300x300?text=Produkt',
+      image: extractedData.image,
       price: extractedData.price || '0',
       quantity: extractedData.quantity || 1
     };
