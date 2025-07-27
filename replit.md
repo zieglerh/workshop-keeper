@@ -7,6 +7,7 @@ WorkshopTracker is a professional inventory management system designed for works
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
+Image handling: No placeholder images - manual image adjustments preferred.
 
 ## System Architecture
 
