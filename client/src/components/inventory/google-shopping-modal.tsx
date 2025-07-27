@@ -238,7 +238,7 @@ export default function GoogleShoppingModal({ isOpen, onClose, onSelectItem }: G
                                   }}
                                 >
                                   <ExternalLink className="h-3 w-3 mr-1" />
-                                  Im Shop ansehen
+                                  Details anzeigen
                                 </Button>
                               ) : (
                                 <Button
