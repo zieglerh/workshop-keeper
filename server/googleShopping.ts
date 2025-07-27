@@ -36,7 +36,7 @@ export async function searchGoogleShopping(query: string): Promise<GoogleShoppin
       return [];
     }
 
-    return response.shopping_results.slice(0, 10).map((item: any) => ({
+    const mappedResults = response.shopping_results.slice(0, 10).map((item: any) => ({
       title: item.title || 'Unbekannter Artikel',
       price: item.price || undefined,
       link: item.link || '',
@@ -46,6 +46,9 @@ export async function searchGoogleShopping(query: string): Promise<GoogleShoppin
       rating: item.rating ? parseFloat(item.rating) : undefined,
       reviews: item.reviews ? parseInt(item.reviews.toString().replace(/[^\d]/g, '')) : undefined
     }));
+    
+    console.log('Mapped results:', mappedResults);
+    return mappedResults;
 
   } catch (error) {
     console.error('Error searching Google Shopping:', error);

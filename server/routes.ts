@@ -355,6 +355,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { searchGoogleShopping } = await import('./googleShopping');
       const results = await searchGoogleShopping(query);
       
+      console.log('Sending results to frontend:', { results });
       res.json({ results });
     } catch (error) {
       console.error("Error searching Google Shopping:", error);

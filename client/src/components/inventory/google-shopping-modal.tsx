@@ -37,7 +37,8 @@ export default function GoogleShoppingModal({ isOpen, onClose, onSelectItem }: G
 
   const searchMutation = useMutation({
     mutationFn: async (query: string): Promise<{ results: GoogleShoppingItem[] }> => {
-      return await apiRequest("POST", "/api/search-google-shopping", { query });
+      const response = await apiRequest("POST", "/api/search-google-shopping", { query });
+      return await response.json();
     },
     onSuccess: (data: { results: GoogleShoppingItem[] }) => {
       console.log('Google Shopping API Response:', data);
