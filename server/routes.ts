@@ -11,6 +11,7 @@ import { z } from "zod";
 import type { Request, Response } from "express";
 import { upload, deleteUploadedFile } from "./upload";
 import { sendBorrowNotification, sendPurchaseNotification, sendUserRegistrationNotification } from "./emailService";
+import { downloadImageFromUrl, isValidImageUrl } from "./imageDownloader";
 import path from "path";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -336,6 +337,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting category:", error);
       res.status(500).json({ message: "Failed to delete category" });
+    }
+  });
+
+  // Image download route
+  app.post("/api/download-image", isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.id);
+      if (currentUser?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { imageUrl } = req.body;
+      if (!imageUrl) {
+        return res.status(400).json({ message: "Image URL is required" });
+      }
+
+      if (!isValidImageUrl(imageUrl)) {
+        return res.status(400).json({ message: "Invalid image URL" });
+      }
+
+      console.log('Downloading image from URL:', imageUrl);
+      const result = await downloadImageFromUrl(imageUrl);
+      
+      if (result.success) {
+        res.json({ 
+          success: true, 
+          localPath: result.localPath,
+          message: "Image downloaded successfully"
+        });
+      } else {
+        res.status(400).json({ 
+          success: false, 
+          error: result.error || "Failed to download image"
+        });
+      }
+    } catch (error) {
+      console.error("Error in image download:", error);
+      res.status(500).json({ message: "Failed to download image" });
     }
   });
 

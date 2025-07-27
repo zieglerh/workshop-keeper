@@ -30,6 +30,7 @@ export default function AddItemModal({ isOpen, onClose, categories }: AddItemMod
   const [totalCost, setTotalCost] = useState<string>("");
   const [quantity, setQuantity] = useState<string>("1");
   const [showGoogleShopping, setShowGoogleShopping] = useState(false);
+  const [isDownloadingImage, setIsDownloadingImage] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -154,7 +155,55 @@ export default function AddItemModal({ isOpen, onClose, categories }: AddItemMod
     setTimeout(calculatePricePerUnit, 0);
   };
 
-  const handleGoogleShoppingSelect = (item: any) => {
+  const downloadImageFromUrl = async (imageUrl: string) => {
+    try {
+      setIsDownloadingImage(true);
+      
+      const response = await apiRequest('POST', '/api/download-image', {
+        imageUrl: imageUrl
+      });
+      
+      if (response.success && response.localPath) {
+        form.setValue("imageUrl", response.localPath);
+        setUploadedImage(response.localPath);
+        toast({
+          title: "Bild heruntergeladen",
+          description: "Das Bild wurde erfolgreich lokal gespeichert.",
+        });
+        return response.localPath;
+      } else {
+        throw new Error(response.error || "Download failed");
+      }
+    } catch (error: any) {
+      console.error("Error downloading image:", error);
+      toast({
+        title: "Bild-Download fehlgeschlagen",
+        description: error.message || "Das Bild konnte nicht heruntergeladen werden.",
+        variant: "destructive",
+      });
+      return null;
+    } finally {
+      setIsDownloadingImage(false);
+    }
+  };
+
+  const handleImageUrlChange = async (imageUrl: string) => {
+    form.setValue("imageUrl", imageUrl);
+    
+    // Check if it's a valid URL and try to download it
+    if (imageUrl && (imageUrl.startsWith('http://') || imageUrl.startsWith('https://'))) {
+      const localPath = await downloadImageFromUrl(imageUrl);
+      if (localPath) {
+        // Image was downloaded successfully, localPath is already set
+        return;
+      }
+    }
+    
+    // If not a URL or download failed, just use the URL as is
+    setUploadedImage(imageUrl);
+  };
+
+  const handleGoogleShoppingSelect = async (item: any) => {
     form.setValue("name", item.title);
     if (item.price) {
       const priceValue = parseFloat(item.price.replace(/[^\d.,]/g, '').replace(',', '.'));
@@ -164,8 +213,8 @@ export default function AddItemModal({ isOpen, onClose, categories }: AddItemMod
       }
     }
     if (item.thumbnail) {
-      form.setValue("imageUrl", item.thumbnail);
-      setUploadedImage(item.thumbnail);
+      // Download the Google Shopping thumbnail
+      await downloadImageFromUrl(item.thumbnail);
     }
     setShowGoogleShopping(false);
   };
@@ -342,15 +391,24 @@ export default function AddItemModal({ isOpen, onClose, categories }: AddItemMod
             </div>
             
             <div>
-              <Label htmlFor="imageUrl">Or Image URL (optional fallback)</Label>
-              <Input
-                id="imageUrl"
-                {...form.register("imageUrl")}
-                placeholder="https://example.com/image.jpg"
-                className="mt-1"
-              />
+              <Label htmlFor="imageUrl">Or Image URL (automatic download)</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="imageUrl"
+                  {...form.register("imageUrl")}
+                  placeholder="https://example.com/image.jpg"
+                  className="mt-1"
+                  onChange={(e) => handleImageUrlChange(e.target.value)}
+                  disabled={isDownloadingImage}
+                />
+                {isDownloadingImage && (
+                  <div className="flex items-center px-3 mt-1">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                  </div>
+                )}
+              </div>
               <p className="text-sm text-muted-foreground mt-1">
-                URL will be used only if no image is uploaded
+                URLs werden automatisch heruntergeladen und lokal gespeichert
               </p>
             </div>
           </div>
