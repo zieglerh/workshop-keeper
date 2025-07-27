@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useMutation } from "@tanstack/react-query";
+import { Edit, Trash2, Tags, Lock } from "lucide-react";
 import type { Category } from "@shared/schema";
 
 export default function Categories() {
@@ -101,7 +102,7 @@ export default function Categories() {
           <Header title="Categories" subtitle="Manage inventory categories." />
           <div className="p-6">
             <div className="text-center py-12">
-              <i className="fas fa-lock text-4xl text-gray-400 mb-4"></i>
+              <Lock className="h-16 w-16 text-gray-400 mb-4 mx-auto" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">Admin Access Required</h3>
               <p className="text-gray-600">Only administrators can manage categories.</p>
             </div>
@@ -161,7 +162,7 @@ export default function Categories() {
             </div>
           ) : categories.length === 0 ? (
             <div className="text-center py-12">
-              <i className="fas fa-tags text-4xl text-gray-400 mb-4"></i>
+              <Tags className="h-16 w-16 text-gray-400 mb-4 mx-auto" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">No categories found</h3>
               <p className="text-gray-600">Start by creating your first inventory category.</p>
             </div>
@@ -193,7 +194,7 @@ export default function Categories() {
                           size="sm"
                           onClick={() => setEditingCategory(category)}
                         >
-                          <i className="fas fa-edit mr-2"></i>
+                          <Edit className="mr-2 h-4 w-4" />
                           Edit
                         </Button>
                         <Button
@@ -203,7 +204,7 @@ export default function Categories() {
                           disabled={deleteMutation.isPending}
                           className="text-red-600 hover:text-red-700"
                         >
-                          <i className="fas fa-trash mr-2"></i>
+                          <Trash2 className="mr-2 h-4 w-4" />
                           Delete
                         </Button>
                       </div>

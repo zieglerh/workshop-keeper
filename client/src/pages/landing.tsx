@@ -1,5 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Wrench } from "lucide-react";
 
 export default function Landing() {
   return (
@@ -9,7 +10,7 @@ export default function Landing() {
           <div className="text-center space-y-6">
             <div className="space-y-2">
               <div className="w-16 h-16 bg-primary rounded-xl flex items-center justify-center mx-auto">
-                <i className="fas fa-tools text-white text-2xl"></i>
+                <Wrench className="text-white h-8 w-8" />
               </div>
               <h1 className="text-3xl font-bold text-gray-900">WorkshopTracker</h1>
               <p className="text-gray-600">Professional inventory management for workshops</p>

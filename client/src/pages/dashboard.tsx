@@ -9,7 +9,7 @@ import StatsWidget from "@/components/stats/stats-widget";
 import ItemCard from "@/components/inventory/item-card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Filter, ShoppingBag, LogOut } from "lucide-react";
+import { Filter, ShoppingBag, LogOut, Package } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useState } from "react";
 import AddItemModal from "@/components/inventory/add-item-modal";
@@ -180,7 +180,7 @@ export default function Dashboard() {
             </div>
           ) : filteredInventory.length === 0 ? (
             <div className="text-center py-12">
-              <i className="fas fa-box-open text-4xl text-gray-400 mb-4"></i>
+              <Package className="h-16 w-16 text-gray-400 mb-4 mx-auto" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">No items found</h3>
               <p className="text-gray-600">
                 {selectedCategory !== "all" || showAvailableOnly || showPurchasableOnly

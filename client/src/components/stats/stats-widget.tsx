@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
+import { Package, HandMetal } from "lucide-react";
 
 export default function StatsWidget() {
   const { data: stats, isLoading } = useQuery({
@@ -48,7 +49,7 @@ export default function StatsWidget() {
               </p>
             </div>
             <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-              <i className="fas fa-boxes text-primary text-xl"></i>
+              <Package className="text-primary h-6 w-6" />
             </div>
           </div>
         </CardContent>
@@ -64,7 +65,7 @@ export default function StatsWidget() {
               </p>
             </div>
             <div className="w-12 h-12 bg-warning/10 rounded-lg flex items-center justify-center">
-              <i className="fas fa-hand-holding text-warning text-xl"></i>
+              <HandMetal className="text-warning h-6 w-6" />
             </div>
           </div>
         </CardContent>

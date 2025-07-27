@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useMutation } from "@tanstack/react-query";
 import { format } from "date-fns";
+import { Undo2, HandMetal, History, CheckCircle } from "lucide-react";
 import type { BorrowingHistoryWithRelations } from "@shared/schema";
 
 export default function Borrowing() {
@@ -104,7 +105,7 @@ export default function Borrowing() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
-                <i className="fas fa-hand-holding text-warning"></i>
+                <HandMetal className="h-5 w-5 text-warning" />
                 <span>Currently Borrowed Items ({activeBorrowings.length})</span>
               </CardTitle>
             </CardHeader>
@@ -126,7 +127,7 @@ export default function Borrowing() {
                 </div>
               ) : activeBorrowings.length === 0 ? (
                 <div className="text-center py-8">
-                  <i className="fas fa-check-circle text-4xl text-green-400 mb-4"></i>
+                  <CheckCircle className="h-16 w-16 text-green-400 mb-4 mx-auto" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">All items returned</h3>
                   <p className="text-gray-600">No items are currently borrowed.</p>
                 </div>
@@ -154,7 +155,7 @@ export default function Borrowing() {
                               onClick={() => returnMutation.mutate(borrowing.itemId)}
                               disabled={returnMutation.isPending}
                             >
-                              <i className="fas fa-undo mr-2"></i>
+                              <Undo2 className="mr-2 h-4 w-4" />
                               Return
                             </Button>
                           )}
@@ -171,7 +172,7 @@ export default function Borrowing() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
-                <i className="fas fa-history text-gray-600"></i>
+                <History className="h-5 w-5 text-gray-600" />
                 <span>Borrowing History</span>
               </CardTitle>
             </CardHeader>
