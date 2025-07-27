@@ -9,7 +9,7 @@ import StatsWidget from "@/components/stats/stats-widget";
 import ItemCard from "@/components/inventory/item-card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Filter, ShoppingBag, LogOut, Package } from "lucide-react";
+import { Filter, ShoppingBag, LogOut, Package, Plus } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useState } from "react";
 import AddItemModal from "@/components/inventory/add-item-modal";
@@ -107,6 +107,7 @@ export default function Dashboard() {
             <div className="flex items-center space-x-4">
               {user?.role === 'admin' && (
                 <Button onClick={() => setShowAddModal(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
                   Add New Item
                 </Button>
               )}
