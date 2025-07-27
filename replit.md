@@ -123,5 +123,7 @@ The application uses PostgreSQL with the following core entities:
 - **Email Notification System**: Complete SMTP integration with German email templates for admin notifications
 - **Phone Number Support**: Added optional phone field across all user forms and management interfaces
 - **Email Events**: Automated notifications for item borrowing, purchases, and new user registrations
+- **Configurable User Notifications**: Database-driven notification templates system with admin management interface
+- **Intelligent Price Calculator**: Automatic price-per-unit calculation based on total purchase cost and quantity in add item form
 
 The application is designed to run efficiently on Replit's infrastructure with secure username/password authentication and admin-controlled user registration.

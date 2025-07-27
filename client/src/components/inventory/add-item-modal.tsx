@@ -25,6 +25,8 @@ export default function AddItemModal({ isOpen, onClose, categories }: AddItemMod
   const { toast } = useToast();
   const [isPurchasable, setIsPurchasable] = useState(false);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [totalCost, setTotalCost] = useState<string>("");
+  const [quantity, setQuantity] = useState<string>("1");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm({
@@ -37,7 +39,7 @@ export default function AddItemModal({ isOpen, onClose, categories }: AddItemMod
       purchaseDate: new Date(),
       imageUrl: "",
       isPurchasable: false,
-      pricePerUnit: "0",
+      price: 0,
       stockQuantity: 1,
     },
   });
@@ -71,6 +73,8 @@ export default function AddItemModal({ isOpen, onClose, categories }: AddItemMod
       form.reset();
       setUploadedImage(null);
       setIsPurchasable(false);
+      setTotalCost("");
+      setQuantity("1");
     },
     onError: (error: Error) => {
       if (isUnauthorizedError(error)) {
@@ -117,6 +121,32 @@ export default function AddItemModal({ isOpen, onClose, categories }: AddItemMod
       const previewUrl = URL.createObjectURL(file);
       setUploadedImage(previewUrl);
     }
+  };
+
+  // Calculate price per unit when total cost or quantity changes
+  const calculatePricePerUnit = () => {
+    const cost = parseFloat(totalCost) || 0;
+    const qty = parseFloat(quantity) || 1;
+    if (qty > 0) {
+      const pricePerUnit = cost / qty;
+      form.setValue('price', parseFloat(pricePerUnit.toFixed(2)));
+    }
+  };
+
+  // Update calculations when values change
+  const handleTotalCostChange = (value: string) => {
+    setTotalCost(value);
+    setTimeout(calculatePricePerUnit, 0);
+  };
+
+  const handleQuantityChange = (value: string) => {
+    setQuantity(value);
+    const qty = parseFloat(value) || 1;
+    // Set stock quantity to entered quantity if not already set
+    if (!form.getValues('stockQuantity') || form.getValues('stockQuantity') === 1) {
+      form.setValue('stockQuantity', qty);
+    }
+    setTimeout(calculatePricePerUnit, 0);
   };
 
   const onSubmit = (data: any) => {
@@ -305,32 +335,90 @@ export default function AddItemModal({ isOpen, onClose, categories }: AddItemMod
           </div>
 
           {isPurchasable && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-gray-50 rounded-lg">
-              <div>
-                <Label htmlFor="pricePerUnit">Price per Unit (€)</Label>
-                <Input
-                  id="pricePerUnit"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  {...form.register("pricePerUnit")}
-                  placeholder="0.00"
-                  className="mt-1"
-                />
-              </div>
+            <div className="space-y-6 p-4 bg-gray-50 rounded-lg">
+              <h4 className="font-medium text-gray-900">Purchase Information</h4>
               
-              <div>
-                <Label htmlFor="stockQuantity">Initial Stock</Label>
-                <Input
-                  id="stockQuantity"
-                  type="number"
-                  min="0"
-                  {...form.register("stockQuantity", {
-                    setValueAs: (value) => parseInt(value) || 0,
-                  })}
-                  placeholder="0"
-                  className="mt-1"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <Label htmlFor="totalCost">Total Purchase Cost (€)</Label>
+                  <Input
+                    id="totalCost"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={totalCost}
+                    onChange={(e) => handleTotalCostChange(e.target.value)}
+                    placeholder="0.00"
+                    className="mt-1"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    What you paid in total for this purchase
+                  </p>
+                </div>
+                
+                <div>
+                  <Label htmlFor="purchaseQuantity">Purchase Quantity</Label>
+                  <Input
+                    id="purchaseQuantity"
+                    type="number"
+                    min="1"
+                    value={quantity}
+                    onChange={(e) => handleQuantityChange(e.target.value)}
+                    placeholder="1"
+                    className="mt-1"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    How many units you purchased
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <Label htmlFor="price">Price per Unit (€)</Label>
+                  <Input
+                    id="price"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    {...form.register("price", {
+                      valueAsNumber: true,
+                    })}
+                    placeholder="0.00"
+                    className="mt-1 bg-gray-100"
+                    readOnly
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Automatically calculated from total cost ÷ quantity
+                  </p>
+                  {form.formState.errors.price && (
+                    <p className="text-sm text-red-600 mt-1">
+                      {form.formState.errors.price.message}
+                    </p>
+                  )}
+                </div>
+                
+                <div>
+                  <Label htmlFor="stockQuantity">Initial Stock Quantity</Label>
+                  <Input
+                    id="stockQuantity"
+                    type="number"
+                    min="0"
+                    {...form.register("stockQuantity", {
+                      valueAsNumber: true,
+                    })}
+                    placeholder="Will default to purchase quantity"
+                    className="mt-1"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Defaults to purchase quantity if not set
+                  </p>
+                  {form.formState.errors.stockQuantity && (
+                    <p className="text-sm text-red-600 mt-1">
+                      {form.formState.errors.stockQuantity.message}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           )}
