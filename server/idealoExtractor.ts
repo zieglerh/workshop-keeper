@@ -66,16 +66,6 @@ export async function extractIdealoProduct(productUrl: string): Promise<IdealoPr
       throw new Error('URL must be from idealo.de');
     }
 
-    // Extract product ID from URL for image generation
-    const productIdMatch = productUrl.match(/\/(\d+)_/);
-    const productId = productIdMatch ? productIdMatch[1] : null;
-    
-    let imageUrl = "https://via.placeholder.com/300x300?text=Produkt";
-    if (productId) {
-      // Generate Idealo image URL based on product ID pattern
-      imageUrl = `https://images.idealo.com/folder/Product/${productId.slice(0, 1)}/${productId.slice(1, 4)}/${productId}_s3.jpg`;
-    }
-
     // Extract relevant data using OpenAI without web scraping
     const prompt = `
 Analysiere diese Idealo.de Produkt-URL und extrahiere Produktinformationen basierend auf der URL-Struktur und deinem Wissen über typische Idealo-Produkte.
@@ -92,7 +82,7 @@ Extrahiere/Erstelle:
 - name: Produktname (basierend auf URL-Segmenten)
 - category: Eine der verfügbaren Kategorien (exakt wie oben aufgelistet, am besten passend)
 - description: Realistische deutsche Produktbeschreibung (2-3 Sätze)
-- image: Verwende diese spezifische URL: "${imageUrl}"
+- image: Verwende die Url aus dem Header
 - price: Realistischer Preis in Euro (z.B. "29.99")
 - quantity: Standardmenge (meist 1, außer bei Packungen)
 
@@ -100,13 +90,14 @@ Beispiel für "spax-schrauben":
 - name: "SPAX Universalschrauben 4x60mm"
 - category: "Material & Supply - Consumables"
 - description: "Hochwertige SPAX Universalschrauben mit T-STAR plus Antrieb. Ideal für Holzverbindungen und vielseitige Befestigungsarbeiten."
+- image: https://cdn.idealo.com/folder/Product/5295/5/5295589/s1_produktbild_gross/spax-4x60-t-star-t20-500-st-191010400603.jpg
 
 Antworte nur mit gültigem JSON in diesem Format:
 {
   "name": "string",
   "category": "string",
   "description": "string", 
-  "image": "${imageUrl}",
+  "image": "string",
   "price": "string",
   "quantity": number
 }
@@ -140,7 +131,7 @@ Antworte nur mit gültigem JSON in diesem Format:
       name: extractedData.name,
       category: extractedData.category,
       description: extractedData.description || '',
-      image: extractedData.image || imageUrl,
+      image: extractedData.image,
       price: extractedData.price || '0',
       quantity: extractedData.quantity || 1
     };
