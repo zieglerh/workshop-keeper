@@ -25,6 +25,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Logout route
+  app.post('/api/logout', (req, res) => {
+    req.session.destroy((err) => {
+      if (err) {
+        console.error("Session destruction error:", err);
+        return res.status(500).json({ message: "Logout failed" });
+      }
+      
+      res.clearCookie('connect.sid'); // Clear session cookie
+      res.json({ 
+        success: true,
+        message: "Erfolgreich abgemeldet" 
+      });
+    });
+  });
+
   // User management routes (admin only)
   app.get("/api/users", isAuthenticated, async (req: any, res) => {
     try {

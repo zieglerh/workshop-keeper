@@ -69,29 +69,7 @@ app.use((req, res, next) => {
     // Wait for database to be ready
     await waitForDatabase();
     
-    // Create default admin user if it doesn't exist
-    try {
-      const { storage } = await import("./storage");
-      const bcrypt = await import("bcrypt");
-      
-      const existingAdmin = await storage.getUserByUsername('admin');
-      if (!existingAdmin) {
-        const passwordHash = await bcrypt.hash('admin123', 10);
-        await storage.createUser({
-          username: 'admin',
-          passwordHash,
-          email: 'admin@workshop.local',
-          firstName: 'System',
-          lastName: 'Administrator',
-          role: 'admin',
-        });
-        log('✅ Default admin user created: admin/admin123');
-      } else {
-        log('✅ Default admin user already exists');
-      }
-    } catch (error) {
-      console.error('Error creating default admin user:', error);
-    }
+
 
     // importantly only setup vite in development and after
     // setting up all the other routes so the catch-all route
