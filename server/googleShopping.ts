@@ -11,6 +11,7 @@ export interface GoogleShoppingItem {
   delivery?: string;
   rating?: number;
   reviews?: number;
+  description?: string;
 }
 
 export async function getProductDetails(productId: string): Promise<any> {
@@ -76,7 +77,8 @@ export async function searchGoogleShopping(query: string): Promise<GoogleShoppin
       source: item.source || 'Unbekannter Shop',
       delivery: item.delivery || undefined,
       rating: item.rating ? parseFloat(item.rating) : undefined,
-      reviews: item.reviews ? parseInt(item.reviews.toString().replace(/[^\d]/g, '')) : undefined
+      reviews: item.reviews ? parseInt(item.reviews.toString().replace(/[^\d]/g, '')) : undefined,
+      description: item.snippet || item.description || undefined
     }));
     
     console.log('Mapped results:', mappedResults);

@@ -209,18 +209,22 @@ export default function AddItemModal({ isOpen, onClose, categories }: AddItemMod
       form.setValue("name", item.title);
     }
     
-    // Set description with source and price info
-    let description = `Gefunden in: ${item.source || 'Unbekannter Shop'}`;
-    if (item.price) {
-      description += `\nPreis: ${item.price}`;
-    }
-    if (item.rating) {
-      description += `\nBewertung: ${item.rating}/5`;
-      if (item.reviews) {
-        description += ` (${item.reviews} Bewertungen)`;
+    // Set description - use API description if available, otherwise fallback to source info
+    if (item.description) {
+      form.setValue("description", item.description);
+    } else {
+      let description = `Gefunden in: ${item.source || 'Unbekannter Shop'}`;
+      if (item.price) {
+        description += `\nPreis: ${item.price}`;
       }
+      if (item.rating) {
+        description += `\nBewertung: ${item.rating}/5`;
+        if (item.reviews) {
+          description += ` (${item.reviews} Bewertungen)`;
+        }
+      }
+      form.setValue("description", description);
     }
-    form.setValue("description", description);
     
     // Set price for purchasable items
     if (item.price) {
@@ -232,10 +236,10 @@ export default function AddItemModal({ isOpen, onClose, categories }: AddItemMod
       }
     }
     
-    // Set image from thumbnail
+    // Set image from thumbnail - only set URL, don't trigger download
     if (item.thumbnail) {
       form.setValue("imageUrl", item.thumbnail);
-      await handleImageUrlChange(item.thumbnail);
+      setUploadedImage(item.thumbnail);
     }
     
     setShowGoogleShopping(false);
@@ -477,7 +481,8 @@ export default function AddItemModal({ isOpen, onClose, categories }: AddItemMod
                     type="number"
                     min="1"
                     value={quantity}
-                    onChange={(e) => handleQuantityChange(e.target.value)}
+                    onChange={(e) => setQuantity(e.target.value)}
+                    onBlur={(e) => handleQuantityChange(e.target.value)}
                     placeholder="1"
                     className="mt-1"
                   />

@@ -22,6 +22,7 @@ interface GoogleShoppingItem {
   delivery?: string;
   rating?: number;
   reviews?: number;
+  description?: string;
 }
 
 interface GoogleShoppingModalProps {
