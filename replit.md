@@ -117,7 +117,8 @@ The application uses PostgreSQL with the following core entities:
 - **UI Components**: Added AlertDialog component for confirmation dialogs
 - **Security**: Admin prevents deletion of last administrator and self-deletion
 - **Docker Build Setup**: Complete Docker configuration with multi-stage builds and PostgreSQL
-- **Database Initialization**: Enhanced init.sql with all tables and default admin user creation
+- **Database Initialization**: Enhanced init.sql with all tables, default admin user, and current categories
 - **API Bug Fixes**: Corrected apiRequest parameter order across all components
+- **Schema Synchronization**: Fixed init.sql to match Drizzle schema with correct bcrypt hash
 
 The application is designed to run efficiently on Replit's infrastructure with secure username/password authentication and admin-controlled user registration.
