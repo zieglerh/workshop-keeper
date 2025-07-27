@@ -13,12 +13,14 @@ import { Filter, ShoppingBag, LogOut, Package, Plus } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useState } from "react";
 import AddItemModal from "@/components/inventory/add-item-modal";
+import GoogleShoppingModal from "@/components/inventory/google-shopping-modal";
 import type { InventoryItemWithRelations, Category } from "@shared/schema";
 
 export default function Dashboard() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showGoogleShoppingModal, setShowGoogleShoppingModal] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [showAvailableOnly, setShowAvailableOnly] = useState(false);
   const [showPurchasableOnly, setShowPurchasableOnly] = useState(false);
@@ -62,19 +64,6 @@ export default function Dashboard() {
     queryKey: ["/api/inventory"],
     retry: false,
     enabled: isAuthenticated,
-    onError: (error: Error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
-    },
   });
 
   const { data: categories = [] } = useQuery({
@@ -87,7 +76,7 @@ export default function Dashboard() {
     return null;
   }
 
-  const filteredInventory = inventory.filter((item: InventoryItemWithRelations) => {
+  const filteredInventory = (inventory as InventoryItemWithRelations[]).filter((item: InventoryItemWithRelations) => {
     if (selectedCategory !== "all" && item.categoryId !== selectedCategory) return false;
     if (showAvailableOnly && !item.isAvailable) return false;
     if (showPurchasableOnly && !item.isPurchasable) return false;
@@ -106,10 +95,19 @@ export default function Dashboard() {
             </div>
             <div className="flex items-center space-x-4">
               {user?.role === 'admin' && (
-                <Button onClick={() => setShowAddModal(true)}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add New Item
-                </Button>
+                <div className="flex items-center space-x-2">
+                  <Button onClick={() => setShowAddModal(true)}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add New Item
+                  </Button>
+                  <Button 
+                    onClick={() => setShowGoogleShoppingModal(true)} 
+                    variant="outline"
+                  >
+                    <ShoppingBag className="mr-2 h-4 w-4" />
+                    Add Google Item
+                  </Button>
+                </div>
               )}
               <Button
                 onClick={handleLogout}
@@ -136,7 +134,7 @@ export default function Dashboard() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Categories</SelectItem>
-                    {categories.map((category: Category) => (
+                    {(categories as Category[]).map((category: Category) => (
                       <SelectItem key={category.id} value={category.id}>
                         {category.name}
                       </SelectItem>
@@ -205,7 +203,20 @@ export default function Dashboard() {
         <AddItemModal
           isOpen={showAddModal}
           onClose={() => setShowAddModal(false)}
-          categories={categories}
+          categories={categories as Category[]}
+        />
+      )}
+
+      {showGoogleShoppingModal && (
+        <GoogleShoppingModal
+          isOpen={showGoogleShoppingModal}
+          onClose={() => setShowGoogleShoppingModal(false)}
+          onSelectItem={(item) => {
+            // Open Add Item Modal with pre-filled data from Google Shopping
+            setShowGoogleShoppingModal(false);
+            setShowAddModal(true);
+            // TODO: Pre-fill the form with selected item data
+          }}
         />
       )}
     </div>

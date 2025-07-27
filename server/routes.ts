@@ -8,6 +8,7 @@ import {
   insertPurchaseSchema,
 } from "@shared/schema";
 import { z } from "zod";
+import type { Request, Response } from "express";
 import { upload, deleteUploadedFile } from "./upload";
 import { sendBorrowNotification, sendPurchaseNotification, sendUserRegistrationNotification } from "./emailService";
 import path from "path";
@@ -335,6 +336,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting category:", error);
       res.status(500).json({ message: "Failed to delete category" });
+    }
+  });
+
+  // Google Shopping search route
+  app.post("/api/search-google-shopping", isAuthenticated, async (req: Request & { user: any }, res: Response) => {
+    try {
+      const currentUser = await storage.getUser(req.user.id);
+      if (currentUser?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { query } = req.body;
+      if (!query) {
+        return res.status(400).json({ message: "Search query is required" });
+      }
+
+      const { searchGoogleShopping } = await import('./googleShopping');
+      const results = await searchGoogleShopping(query);
+      
+      res.json({ results });
+    } catch (error) {
+      console.error("Error searching Google Shopping:", error);
+      res.status(500).json({ message: "Failed to search Google Shopping" });
     }
   });
 
