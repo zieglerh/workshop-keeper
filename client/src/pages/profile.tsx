@@ -22,6 +22,7 @@ export default function Profile() {
     firstName: user?.firstName || '',
     lastName: user?.lastName || '',
     email: user?.email || '',
+    phone: user?.phone || '',
   });
   
   const [passwordData, setPasswordData] = useState({
@@ -335,6 +336,17 @@ export default function Profile() {
                     value={profileData.email}
                     onChange={(e) => setProfileData(prev => ({ ...prev, email: e.target.value }))}
                     placeholder="your.email@example.com"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone Number (optional)</Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    value={profileData.phone}
+                    onChange={(e) => setProfileData(prev => ({ ...prev, phone: e.target.value }))}
+                    placeholder="+49 123 456789"
                   />
                 </div>
 

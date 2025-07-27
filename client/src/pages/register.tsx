@@ -17,6 +17,7 @@ export default function Register() {
     email: '',
     firstName: '',
     lastName: '',
+    phone: '',
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -53,6 +54,8 @@ export default function Register() {
         password: formData.password,
         email: formData.email || null,
         firstName: formData.firstName || null,
+        lastName: formData.lastName || null,
+        phone: formData.phone || null,
         lastName: formData.lastName || null,
       });
 
@@ -158,6 +161,18 @@ export default function Register() {
                 onChange={(e) => handleInputChange('email', e.target.value)}
                 disabled={isLoading}
                 placeholder="ihre.email@beispiel.de"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="phone">Telefonnummer (optional)</Label>
+              <Input
+                id="phone"
+                type="tel"
+                value={formData.phone}
+                onChange={(e) => handleInputChange('phone', e.target.value)}
+                disabled={isLoading}
+                placeholder="+49 123 456789"
               />
             </div>
 

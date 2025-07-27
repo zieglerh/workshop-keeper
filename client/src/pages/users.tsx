@@ -30,6 +30,7 @@ export default function Users() {
     lastName: '',
     email: '',
     username: '',
+    phone: '',
   });
   const [passwordUser, setPasswordUser] = useState<UserType | null>(null);
   const [passwordData, setPasswordData] = useState({
@@ -42,6 +43,7 @@ export default function Users() {
     firstName: '',
     lastName: '',
     email: '',
+    phone: '',
     password: '',
     confirmPassword: '',
     role: 'user',
@@ -218,6 +220,7 @@ export default function Users() {
         firstName: userData.firstName,
         lastName: userData.lastName,
         email: userData.email,
+        phone: userData.phone,
         password: userData.password,
         role: userData.role,
       });
@@ -231,6 +234,7 @@ export default function Users() {
         firstName: '',
         lastName: '',
         email: '',
+        phone: '',
         password: '',
         confirmPassword: '',
         role: 'user',
@@ -260,6 +264,7 @@ export default function Users() {
       lastName: userToEdit.lastName || '',
       email: userToEdit.email || '',
       username: userToEdit.username || '',
+      phone: userToEdit.phone || '',
     });
   };
 
@@ -595,6 +600,16 @@ export default function Users() {
                                         placeholder="Email address"
                                       />
                                     </div>
+                                    <div className="space-y-2">
+                                      <Label htmlFor="editPhone">Phone Number (optional)</Label>
+                                      <Input
+                                        id="editPhone"
+                                        type="tel"
+                                        value={editData.phone}
+                                        onChange={(e) => setEditData(prev => ({ ...prev, phone: e.target.value }))}
+                                        placeholder="+49 123 456789"
+                                      />
+                                    </div>
                                   </div>
                                   <DialogFooter>
                                     <Button
@@ -760,6 +775,16 @@ export default function Users() {
                   value={createUserData.email}
                   onChange={(e) => setCreateUserData(prev => ({ ...prev, email: e.target.value }))}
                   placeholder="Email address"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="createPhone">Phone Number (optional)</Label>
+                <Input
+                  id="createPhone"
+                  type="tel"
+                  value={createUserData.phone}
+                  onChange={(e) => setCreateUserData(prev => ({ ...prev, phone: e.target.value }))}
+                  placeholder="+49 123 456789"
                 />
               </div>
               <div className="space-y-2">
