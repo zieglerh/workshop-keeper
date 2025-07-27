@@ -15,7 +15,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Users as UsersIcon, Shield, User, Clock, UserCheck, UserX, LogOut, Edit, Trash2 } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { Users as UsersIcon, Shield, User, Clock, UserCheck, UserX, LogOut, Edit, Trash2, Plus, Key } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { User as UserType } from "@shared/schema";
 import { format } from "date-fns";
@@ -28,6 +29,22 @@ export default function Users() {
     firstName: '',
     lastName: '',
     email: '',
+    username: '',
+  });
+  const [passwordUser, setPasswordUser] = useState<UserType | null>(null);
+  const [passwordData, setPasswordData] = useState({
+    newPassword: '',
+    confirmPassword: '',
+  });
+  const [showCreateUser, setShowCreateUser] = useState(false);
+  const [createUserData, setCreateUserData] = useState({
+    username: '',
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    role: 'user',
   });
 
   const handleLogout = async () => {
@@ -173,6 +190,65 @@ export default function Users() {
     },
   });
 
+  const changePasswordMutation = useMutation({
+    mutationFn: async ({ userId, password }: { userId: string; password: string }) => {
+      await apiRequest('PATCH', `/api/users/${userId}/password`, { password });
+    },
+    onSuccess: () => {
+      setPasswordUser(null);
+      setPasswordData({ newPassword: '', confirmPassword: '' });
+      toast({
+        title: "Password changed",
+        description: "User password has been successfully updated",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Error changing password",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const createUserMutation = useMutation({
+    mutationFn: async (userData: typeof createUserData) => {
+      await apiRequest('POST', '/api/users', {
+        username: userData.username,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        email: userData.email,
+        password: userData.password,
+        role: userData.role,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users/pending"] });
+      setShowCreateUser(false);
+      setCreateUserData({
+        username: '',
+        firstName: '',
+        lastName: '',
+        email: '',
+        password: '',
+        confirmPassword: '',
+        role: 'user',
+      });
+      toast({
+        title: "User created",
+        description: "New user has been successfully created",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Error creating user",
+        variant: "destructive",
+      });
+    },
+  });
+
   if (isLoading || !isAuthenticated) {
     return null;
   }
@@ -183,6 +259,15 @@ export default function Users() {
       firstName: userToEdit.firstName || '',
       lastName: userToEdit.lastName || '',
       email: userToEdit.email || '',
+      username: userToEdit.username || '',
+    });
+  };
+
+  const handlePasswordUser = (userToEdit: UserType) => {
+    setPasswordUser(userToEdit);
+    setPasswordData({
+      newPassword: '',
+      confirmPassword: '',
     });
   };
 
@@ -190,6 +275,64 @@ export default function Users() {
     if (editUser) {
       editUserMutation.mutate({ userId: editUser.id, data: editData });
     }
+  };
+
+  const handlePasswordSubmit = () => {
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast({
+        title: "Error",
+        description: "Passwords do not match",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (passwordData.newPassword.length < 6) {
+      toast({
+        title: "Error",
+        description: "Password must be at least 6 characters long",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (passwordUser) {
+      changePasswordMutation.mutate({
+        userId: passwordUser.id,
+        password: passwordData.newPassword,
+      });
+    }
+  };
+
+  const handleCreateUser = () => {
+    if (createUserData.password !== createUserData.confirmPassword) {
+      toast({
+        title: "Error",
+        description: "Passwords do not match",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (createUserData.password.length < 6) {
+      toast({
+        title: "Error",
+        description: "Password must be at least 6 characters long",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!createUserData.username || createUserData.username.length < 3) {
+      toast({
+        title: "Error",
+        description: "Username must be at least 3 characters long",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    createUserMutation.mutate(createUserData);
   };
 
   if (user?.role !== 'admin') {
@@ -233,14 +376,24 @@ export default function Users() {
               </h1>
               <p className="text-muted-foreground">Manage user accounts and permissions</p>
             </div>
-            <Button
-              onClick={handleLogout}
-              variant="outline"
-              size="sm"
-            >
-              <LogOut className="mr-2 h-4 w-4" />
-              Sign Out
-            </Button>
+            <div className="flex items-center space-x-2">
+              <Button
+                onClick={() => setShowCreateUser(true)}
+                variant="default"
+                size="sm"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Create User
+              </Button>
+              <Button
+                onClick={handleLogout}
+                variant="outline"
+                size="sm"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Sign Out
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -424,6 +577,15 @@ export default function Users() {
                                       </div>
                                     </div>
                                     <div className="space-y-2">
+                                      <Label htmlFor="editUsername">Username</Label>
+                                      <Input
+                                        id="editUsername"
+                                        value={editData.username}
+                                        onChange={(e) => setEditData(prev => ({ ...prev, username: e.target.value }))}
+                                        placeholder="Username"
+                                      />
+                                    </div>
+                                    <div className="space-y-2">
                                       <Label htmlFor="editEmail">Email</Label>
                                       <Input
                                         id="editEmail"
@@ -440,6 +602,57 @@ export default function Users() {
                                       disabled={editUserMutation.isPending}
                                     >
                                       {editUserMutation.isPending ? 'Saving...' : 'Save'}
+                                    </Button>
+                                  </DialogFooter>
+                                </DialogContent>
+                              </Dialog>
+
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <Button
+                                    size="sm"
+                                    variant="secondary"
+                                    onClick={() => handlePasswordUser(activeUser)}
+                                  >
+                                    <Key className="w-4 h-4 mr-1" />
+                                    Password
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                  <DialogHeader>
+                                    <DialogTitle>Change Password</DialogTitle>
+                                    <DialogDescription>
+                                      Set new password for @{passwordUser?.username}
+                                    </DialogDescription>
+                                  </DialogHeader>
+                                  <div className="space-y-4">
+                                    <div className="space-y-2">
+                                      <Label htmlFor="newPassword">New Password</Label>
+                                      <Input
+                                        id="newPassword"
+                                        type="password"
+                                        value={passwordData.newPassword}
+                                        onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
+                                        placeholder="Enter new password"
+                                      />
+                                    </div>
+                                    <div className="space-y-2">
+                                      <Label htmlFor="confirmNewPassword">Confirm Password</Label>
+                                      <Input
+                                        id="confirmNewPassword"
+                                        type="password"
+                                        value={passwordData.confirmPassword}
+                                        onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                                        placeholder="Confirm new password"
+                                      />
+                                    </div>
+                                  </div>
+                                  <DialogFooter>
+                                    <Button
+                                      onClick={handlePasswordSubmit}
+                                      disabled={changePasswordMutation.isPending}
+                                    >
+                                      {changePasswordMutation.isPending ? 'Changing...' : 'Change Password'}
                                     </Button>
                                   </DialogFooter>
                                 </DialogContent>
@@ -499,6 +712,108 @@ export default function Users() {
             </TabsContent>
           </Tabs>
         </div>
+
+        {/* Create User Dialog */}
+        <Dialog open={showCreateUser} onOpenChange={setShowCreateUser}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Create New User</DialogTitle>
+              <DialogDescription>
+                Add a new user to the system
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="createUsername">Username *</Label>
+                <Input
+                  id="createUsername"
+                  value={createUserData.username}
+                  onChange={(e) => setCreateUserData(prev => ({ ...prev, username: e.target.value }))}
+                  placeholder="Username"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="createFirstName">First Name</Label>
+                  <Input
+                    id="createFirstName"
+                    value={createUserData.firstName}
+                    onChange={(e) => setCreateUserData(prev => ({ ...prev, firstName: e.target.value }))}
+                    placeholder="First name"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="createLastName">Last Name</Label>
+                  <Input
+                    id="createLastName"
+                    value={createUserData.lastName}
+                    onChange={(e) => setCreateUserData(prev => ({ ...prev, lastName: e.target.value }))}
+                    placeholder="Last name"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="createEmail">Email</Label>
+                <Input
+                  id="createEmail"
+                  type="email"
+                  value={createUserData.email}
+                  onChange={(e) => setCreateUserData(prev => ({ ...prev, email: e.target.value }))}
+                  placeholder="Email address"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="createPassword">Password *</Label>
+                <Input
+                  id="createPassword"
+                  type="password"
+                  value={createUserData.password}
+                  onChange={(e) => setCreateUserData(prev => ({ ...prev, password: e.target.value }))}
+                  placeholder="Password"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="createConfirmPassword">Confirm Password *</Label>
+                <Input
+                  id="createConfirmPassword"
+                  type="password"
+                  value={createUserData.confirmPassword}
+                  onChange={(e) => setCreateUserData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                  placeholder="Confirm password"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="createRole">Role</Label>
+                <Select
+                  value={createUserData.role}
+                  onValueChange={(role) => setCreateUserData(prev => ({ ...prev, role }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="user">User</SelectItem>
+                    <SelectItem value="admin">Administrator</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setShowCreateUser(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleCreateUser}
+                disabled={createUserMutation.isPending}
+              >
+                {createUserMutation.isPending ? 'Creating...' : 'Create User'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </main>
     </div>
   );

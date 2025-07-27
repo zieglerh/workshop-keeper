@@ -34,7 +34,7 @@ export interface IStorage {
   getUsersByRole(role: string): Promise<User[]>;
   updateUserRole(id: string, role: string): Promise<User>;
   updateUserProfile(id: string, profile: Partial<User>): Promise<User>;
-  updateUserPassword(id: string, passwordHash: string): Promise<void>;
+  updateUserPassword(id: string, password: string): Promise<void>;
   deleteUser(id: string): Promise<void>;
 
   // Category operations
@@ -158,6 +158,7 @@ export class DatabaseStorage implements IStorage {
         firstName: profile.firstName,
         lastName: profile.lastName,
         email: profile.email,
+        username: profile.username,
         updatedAt: new Date()
       })
       .where(eq(users.id, id))
@@ -165,7 +166,10 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async updateUserPassword(id: string, passwordHash: string): Promise<void> {
+  async updateUserPassword(id: string, password: string): Promise<void> {
+    const bcrypt = await import('bcrypt');
+    const passwordHash = await bcrypt.hash(password, 10);
+    
     await db
       .update(users)
       .set({ 

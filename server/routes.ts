@@ -61,19 +61,115 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const currentUser = await storage.getUser(req.user.id);
       if (currentUser?.role !== 'admin') {
-        return res.status(403).json({ message: "Admin-Zugriff erforderlich" });
+        return res.status(403).json({ message: "Admin access required" });
       }
 
       const { role } = req.body;
       if (!role || !['admin', 'user', 'pending'].includes(role)) {
-        return res.status(400).json({ message: "Ungültige Rolle" });
+        return res.status(400).json({ message: "Invalid role" });
       }
 
       const updatedUser = await storage.updateUserRole(req.params.id, role);
       res.json(updatedUser);
     } catch (error) {
       console.error("Error updating user role:", error);
-      res.status(500).json({ message: "Fehler beim Aktualisieren der Benutzerrolle" });
+      res.status(500).json({ message: "Error updating user role" });
+    }
+  });
+
+  // Update user profile (admin only)
+  app.patch("/api/users/:id/profile", isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.id);
+      if (currentUser?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { firstName, lastName, email, username } = req.body;
+      
+      // Check if username is already taken (if username is being changed)
+      if (username) {
+        const existingUser = await storage.getUserByUsername(username);
+        if (existingUser && existingUser.id !== req.params.id) {
+          return res.status(400).json({ message: "Username already taken" });
+        }
+      }
+
+      const updatedUser = await storage.updateUserProfile(req.params.id, {
+        firstName,
+        lastName,
+        email,
+        username,
+      });
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating user profile:", error);
+      res.status(500).json({ message: "Error updating user profile" });
+    }
+  });
+
+  // Change user password (admin only)
+  app.patch("/api/users/:id/password", isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.id);
+      if (currentUser?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { password } = req.body;
+      if (!password || password.length < 6) {
+        return res.status(400).json({ message: "Password must be at least 6 characters long" });
+      }
+
+      await storage.updateUserPassword(req.params.id, password);
+      res.json({ success: true, message: "Password updated successfully" });
+    } catch (error) {
+      console.error("Error updating user password:", error);
+      res.status(500).json({ message: "Error updating user password" });
+    }
+  });
+
+  // Create new user (admin only)
+  app.post("/api/users", isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.id);
+      if (currentUser?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { username, firstName, lastName, email, password, role } = req.body;
+      
+      if (!username || !password) {
+        return res.status(400).json({ message: "Username and password are required" });
+      }
+
+      if (password.length < 6) {
+        return res.status(400).json({ message: "Password must be at least 6 characters long" });
+      }
+
+      if (username.length < 3) {
+        return res.status(400).json({ message: "Username must be at least 3 characters long" });
+      }
+
+      // Check if username already exists
+      const existingUser = await storage.getUserByUsername(username);
+      if (existingUser) {
+        return res.status(400).json({ message: "Username already taken" });
+      }
+
+      const newUser = await storage.createUser({
+        username,
+        firstName: firstName || null,
+        lastName: lastName || null,
+        email: email || null,
+        password,
+        role: role || 'user',
+      });
+
+      res.status(201).json(newUser);
+    } catch (error) {
+      console.error("Error creating user:", error);
+      res.status(500).json({ message: "Error creating user" });
     }
   });
 
@@ -93,28 +189,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Update user profile by admin
-  app.patch("/api/users/:id/profile", isAuthenticated, async (req: any, res) => {
-    try {
-      const currentUser = await storage.getUser(req.user.id);
-      if (currentUser?.role !== 'admin') {
-        return res.status(403).json({ message: "Admin-Zugriff erforderlich" });
-      }
 
-      const { firstName, lastName, email } = req.body;
-      
-      const updatedUser = await storage.updateUserProfile(req.params.id, {
-        firstName: firstName || null,
-        lastName: lastName || null,
-        email: email || null,
-      });
-      
-      res.json(updatedUser);
-    } catch (error) {
-      console.error("Error updating user profile:", error);
-      res.status(500).json({ message: "Fehler beim Aktualisieren des Benutzerprofils" });
-    }
-  });
 
   // Delete user by admin
   app.delete("/api/users/:id", isAuthenticated, async (req: any, res) => {
