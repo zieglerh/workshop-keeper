@@ -338,29 +338,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // URL Import route
-  app.post("/api/import-from-url", isAuthenticated, async (req: any, res) => {
-    try {
-      const currentUser = await storage.getUser(req.user.id);
-      if (currentUser?.role !== 'admin') {
-        return res.status(403).json({ message: "Admin access required" });
-      }
-
-      const { url } = req.body;
-      if (!url) {
-        return res.status(400).json({ message: "URL is required" });
-      }
-
-      const { extractItemDataFromUrl } = await import('./urlImport');
-      const extractedData = await extractItemDataFromUrl(url);
-      
-      res.json(extractedData);
-    } catch (error) {
-      console.error("Error importing from URL:", error);
-      res.status(500).json({ message: "Failed to import item data from URL" });
-    }
-  });
-
   // Inventory routes
   app.get("/api/inventory", isAuthenticated, async (req, res) => {
     try {

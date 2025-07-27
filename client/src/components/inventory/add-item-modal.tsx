@@ -13,7 +13,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { useState, useRef } from "react";
-import UrlImportModal from "./url-import-modal";
+
 import type { Category } from "@shared/schema";
 
 interface AddItemModalProps {
@@ -28,7 +28,7 @@ export default function AddItemModal({ isOpen, onClose, categories }: AddItemMod
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [totalCost, setTotalCost] = useState<string>("");
   const [quantity, setQuantity] = useState<string>("1");
-  const [showUrlImport, setShowUrlImport] = useState(false);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm({
@@ -77,7 +77,7 @@ export default function AddItemModal({ isOpen, onClose, categories }: AddItemMod
       setIsPurchasable(false);
       setTotalCost("");
       setQuantity("1");
-      setShowUrlImport(false);
+
     },
     onError: (error: Error) => {
       if (isUnauthorizedError(error)) {
