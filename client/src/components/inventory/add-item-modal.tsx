@@ -16,6 +16,7 @@ import { useState, useRef } from "react";
 
 import type { Category } from "@shared/schema";
 import GoogleShoppingModal from "./google-shopping-modal";
+import IdealoModal from "./idealo-modal";
 
 interface AddItemModalProps {
   isOpen: boolean;
@@ -30,6 +31,7 @@ export default function AddItemModal({ isOpen, onClose, categories }: AddItemMod
   const [totalCost, setTotalCost] = useState<string>("");
   const [quantity, setQuantity] = useState<string>("1");
   const [showGoogleShopping, setShowGoogleShopping] = useState(false);
+  const [showIdealoModal, setShowIdealoModal] = useState(false);
   const [isDownloadingImage, setIsDownloadingImage] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -273,6 +275,49 @@ export default function AddItemModal({ isOpen, onClose, categories }: AddItemMod
     }
   };
 
+  const handleIdealoSelect = async (product: any) => {
+    // Set product data from Idealo extraction
+    if (product.name) {
+      form.setValue("name", product.name);
+    }
+    
+    if (product.description) {
+      form.setValue("description", product.description);
+    }
+    
+    // Set category - find matching category ID
+    if (product.category) {
+      const matchingCategory = categories?.find(cat => cat.name === product.category);
+      if (matchingCategory) {
+        form.setValue("categoryId", matchingCategory.id);
+      }
+    }
+    
+    // Set price for purchasable items
+    if (product.price) {
+      const priceValue = parseFloat(product.price.replace(/[^\d.,]/g, '').replace(',', '.'));
+      if (!isNaN(priceValue)) {
+        setIsPurchasable(true);
+        setTotalCost(priceValue.toString());
+        handleTotalCostChange(priceValue.toString());
+      }
+    }
+    
+    // Set quantity
+    if (product.quantity) {
+      setQuantity(product.quantity.toString());
+      form.setValue('stockQuantity', product.quantity);
+    }
+    
+    // Set image from URL - only set URL, don't trigger download
+    if (product.image) {
+      form.setValue("imageUrl", product.image);
+      setUploadedImage(product.image);
+    }
+    
+    setShowIdealoModal(false);
+  };
+
 
 
   const onSubmit = (data: any) => {
@@ -299,6 +344,15 @@ export default function AddItemModal({ isOpen, onClose, categories }: AddItemMod
               className="flex items-center gap-2"
             >
               🛒 Add Google Item
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setShowIdealoModal(true)}
+              className="flex items-center gap-2"
+            >
+              🔗 Add Idealo Item
             </Button>
           </div>
         </DialogHeader>
@@ -584,6 +638,12 @@ export default function AddItemModal({ isOpen, onClose, categories }: AddItemMod
           isOpen={showGoogleShopping}
           onClose={() => setShowGoogleShopping(false)}
           onSelectItem={handleGoogleShoppingSelect}
+        />
+
+        <IdealoModal
+          isOpen={showIdealoModal}
+          onClose={() => setShowIdealoModal(false)}
+          onSelectProduct={handleIdealoSelect}
         />
 
       </DialogContent>

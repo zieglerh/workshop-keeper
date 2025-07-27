@@ -8,6 +8,7 @@ import Header from "@/components/layout/header";
 import ItemCard from "@/components/inventory/item-card";
 import AddItemModal from "@/components/inventory/add-item-modal";
 import GoogleShoppingModal from "@/components/inventory/google-shopping-modal";
+import IdealoModal from "@/components/inventory/idealo-modal";
 import UserNotification from "@/components/notifications/user-notification";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +21,7 @@ export default function Inventory() {
   const { isAuthenticated, isLoading, user } = useAuth();
   const [showAddModal, setShowAddModal] = useState(false);
   const [showGoogleShoppingModal, setShowGoogleShoppingModal] = useState(false);
+  const [showIdealoModal, setShowIdealoModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [showAvailableOnly, setShowAvailableOnly] = useState(false);
@@ -155,6 +157,13 @@ export default function Inventory() {
                 <ShoppingBag className="h-4 w-4" />
                 Add Google Item
               </Button>
+              <Button 
+                onClick={() => setShowIdealoModal(true)}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                🔗 Add Idealo Item
+              </Button>
             </div>
           )}
 
@@ -218,6 +227,18 @@ export default function Inventory() {
           isOpen={showAddModal}
           onClose={() => setShowAddModal(false)}
           categories={categories}
+        />
+      )}
+
+      {showIdealoModal && (
+        <IdealoModal
+          isOpen={showIdealoModal}
+          onClose={() => setShowIdealoModal(false)}
+          onSelectProduct={(product) => {
+            // Close Idealo modal and open Add Item modal with prefilled data
+            setShowIdealoModal(false);
+            setShowAddModal(true);
+          }}
         />
       )}
 

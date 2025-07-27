@@ -426,6 +426,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Idealo Product Extraction route
+  app.post("/api/extract-idealo-product", isAuthenticated, async (req: Request & { user: any }, res: Response) => {
+    try {
+      const currentUser = await storage.getUser(req.user.id);
+      if (currentUser?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { productUrl } = req.body;
+      if (!productUrl) {
+        return res.status(400).json({ message: "Product URL is required" });
+      }
+
+      if (!productUrl.includes('idealo.de')) {
+        return res.status(400).json({ message: "URL must be from idealo.de" });
+      }
+
+      const { extractIdealoProduct } = await import('./idealoExtractor');
+      const result = await extractIdealoProduct(productUrl);
+      
+      res.json(result);
+    } catch (error) {
+      console.error("Error extracting Idealo product:", error);
+      res.status(500).json({ message: error.message || "Failed to extract product from Idealo" });
+    }
+  });
+
   // Inventory routes
   app.get("/api/inventory", isAuthenticated, async (req, res) => {
     try {
