@@ -165,8 +165,8 @@ export default function GoogleShoppingModal({ isOpen, onClose, onSelectItem }: G
               <ScrollArea className="h-[500px] pr-4">
                 <div className="space-y-3">
                   {searchResults && searchResults.map((item, index) => (
-                    <Card key={index} className="cursor-pointer hover:shadow-md transition-shadow border-2 hover:border-primary/20">
-                      <CardContent className="p-4" onClick={() => handleSelectItem(item)}>
+                    <Card key={index} className="hover:shadow-md transition-shadow border-2 hover:border-primary/20">
+                      <CardContent className="p-4">
                         <div className="flex space-x-4">
                           {/* Product Image */}
                           <div className="flex-shrink-0">
