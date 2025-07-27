@@ -7,8 +7,7 @@ import Sidebar from "@/components/layout/sidebar";
 import Header from "@/components/layout/header";
 import ItemCard from "@/components/inventory/item-card";
 import AddItemModal from "@/components/inventory/add-item-modal";
-import GoogleShoppingModal from "@/components/inventory/google-shopping-modal";
-import IdealoModal from "@/components/inventory/idealo-modal";
+
 import UserNotification from "@/components/notifications/user-notification";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,8 +19,7 @@ export default function Inventory() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
   const [showAddModal, setShowAddModal] = useState(false);
-  const [showGoogleShoppingModal, setShowGoogleShoppingModal] = useState(false);
-  const [showIdealoModal, setShowIdealoModal] = useState(false);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [showAvailableOnly, setShowAvailableOnly] = useState(false);
@@ -94,6 +92,8 @@ export default function Inventory() {
           subtitle="Manage your workshop tools, machines, and equipment."
           showAddButton={user?.role === 'admin'}
           onAddClick={() => setShowAddModal(true)}
+          addButtonText="Add New Item"
+          addButtonIcon="plus"
           showSearch={true}
           searchValue={searchTerm}
           onSearchChange={setSearchTerm}
@@ -139,33 +139,7 @@ export default function Inventory() {
             </div>
           </div>
 
-          {/* Action Buttons for Admin */}
-          {user?.role === 'admin' && (
-            <div className="flex gap-4 mb-6">
-              <Button 
-                onClick={() => setShowAddModal(true)}
-                className="flex items-center gap-2"
-              >
-                <Package className="h-4 w-4" />
-                Add New Item
-              </Button>
-              <Button 
-                onClick={() => setShowGoogleShoppingModal(true)}
-                variant="outline"
-                className="flex items-center gap-2"
-              >
-                <ShoppingBag className="h-4 w-4" />
-                Add Google Item
-              </Button>
-              <Button 
-                onClick={() => setShowIdealoModal(true)}
-                variant="outline"
-                className="flex items-center gap-2"
-              >
-                🔗 Add Idealo Item
-              </Button>
-            </div>
-          )}
+
 
           {/* Inventory Grid */}
           {inventoryLoading ? (
@@ -209,36 +183,11 @@ export default function Inventory() {
         </div>
       </main>
 
-      {/* Google Shopping Modal */}
-      {showGoogleShoppingModal && (
-        <GoogleShoppingModal
-          isOpen={showGoogleShoppingModal}
-          onClose={() => setShowGoogleShoppingModal(false)}
-          onSelectItem={(item) => {
-            // Close Google Shopping modal and open Add Item modal
-            setShowGoogleShoppingModal(false);
-            setShowAddModal(true);
-          }}
-        />
-      )}
-
       {showAddModal && (
         <AddItemModal
           isOpen={showAddModal}
           onClose={() => setShowAddModal(false)}
           categories={categories}
-        />
-      )}
-
-      {showIdealoModal && (
-        <IdealoModal
-          isOpen={showIdealoModal}
-          onClose={() => setShowIdealoModal(false)}
-          onSelectProduct={(product) => {
-            // Close Idealo modal and open Add Item modal with prefilled data
-            setShowIdealoModal(false);
-            setShowAddModal(true);
-          }}
         />
       )}
 

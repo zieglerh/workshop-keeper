@@ -8,6 +8,7 @@ interface HeaderProps {
   showAddButton?: boolean;
   onAddClick?: () => void;
   addButtonText?: string;
+  addButtonIcon?: string;
   showSearch?: boolean;
   searchValue?: string;
   onSearchChange?: (value: string) => void;
@@ -20,6 +21,7 @@ export default function Header({
   showAddButton = false,
   onAddClick,
   addButtonText = "Add Item",
+  addButtonIcon = "plus",
   showSearch = false,
   searchValue = "",
   onSearchChange,
