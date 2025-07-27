@@ -7,12 +7,19 @@ import { storage } from "./storage";
 export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
   const pgStore = connectPg(session);
+  
+  // Check if we're using Neon vs regular PostgreSQL
+  const isNeonDatabase = process.env.DATABASE_URL?.includes('wss://') || 
+                         process.env.DATABASE_URL?.includes('neon.tech') ||
+                         process.env.DATABASE_URL?.includes('pooler.neon');
+  
   const sessionStore = new pgStore({
     conString: process.env.DATABASE_URL,
     createTableIfMissing: false,
     ttl: sessionTtl,
-    tableName: "sessions",
+    tableName: "sessions"
   });
+  
   return session({
     secret: process.env.SESSION_SECRET!,
     store: sessionStore,
@@ -20,7 +27,7 @@ export function getSession() {
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: process.env.NODE_ENV === 'production' && isNeonDatabase,
       maxAge: sessionTtl,
     },
   });
