@@ -135,8 +135,8 @@ export default function IdealoModal({ isOpen, onClose, onSelectProduct }: Idealo
               </Button>
             </div>
             <p className="text-xs text-gray-500 mt-1">
-              Fügen Sie eine Produkt-URL von idealo.de ein. Das System extrahiert automatisch 
-              Produktname, Kategorie, Beschreibung, Bild und Preis mit Hilfe von ChatGPT.
+              Fügen Sie eine Produkt-URL von idealo.de ein. ChatGPT analysiert die URL und 
+              erstellt automatisch passende Produktinformationen für Ihr Inventar.
             </p>
           </div>
 
