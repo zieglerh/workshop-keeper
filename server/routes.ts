@@ -402,6 +402,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Google Shopping Product Details route
+  app.post("/api/get-product-details", isAuthenticated, async (req: Request & { user: any }, res: Response) => {
+    try {
+      const currentUser = await storage.getUser(req.user.id);
+      if (currentUser?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { productId } = req.body;
+      if (!productId) {
+        return res.status(400).json({ message: "Product ID is required" });
+      }
+
+      const { getProductDetails } = await import('./googleShopping');
+      const details = await getProductDetails(productId);
+      
+      console.log('Sending product details to frontend:', details);
+      res.json(details);
+    } catch (error) {
+      console.error("Error fetching product details:", error);
+      res.status(500).json({ message: "Failed to fetch product details" });
+    }
+  });
+
   // Inventory routes
   app.get("/api/inventory", isAuthenticated, async (req, res) => {
     try {

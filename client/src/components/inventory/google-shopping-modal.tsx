@@ -11,7 +11,7 @@ import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
-import { Loader2, Search, Star, Truck, ExternalLink } from "lucide-react";
+import { Loader2, Search, Star, Truck, ExternalLink, Download } from "lucide-react";
 
 interface GoogleShoppingItem {
   title: string;
@@ -28,12 +28,14 @@ interface GoogleShoppingModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSelectItem: (item: GoogleShoppingItem) => void;
+  onImportData: (data: any) => void;
 }
 
-export default function GoogleShoppingModal({ isOpen, onClose, onSelectItem }: GoogleShoppingModalProps) {
+export default function GoogleShoppingModal({ isOpen, onClose, onSelectItem, onImportData }: GoogleShoppingModalProps) {
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<GoogleShoppingItem[]>([]);
+  const [importingProductId, setImportingProductId] = useState<string | null>(null);
 
   const searchMutation = useMutation({
     mutationFn: async (query: string): Promise<{ results: GoogleShoppingItem[] }> => {
@@ -93,6 +95,62 @@ export default function GoogleShoppingModal({ isOpen, onClose, onSelectItem }: G
   const handleSelectItem = (item: GoogleShoppingItem) => {
     onSelectItem(item);
     handleClose();
+  };
+
+  const importDataMutation = useMutation({
+    mutationFn: async (productId: string): Promise<any> => {
+      const response = await apiRequest("POST", "/api/get-product-details", { productId });
+      return await response.json();
+    },
+    onSuccess: (data: any) => {
+      console.log('Product details received:', data);
+      onImportData(data);
+      toast({
+        title: "Daten übernommen",
+        description: "Produktdaten wurden erfolgreich in das Formular übernommen.",
+      });
+      handleClose();
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      
+      console.error('Import data error:', error);
+      toast({
+        title: "Fehler",
+        description: "Produktdaten konnten nicht geladen werden.",
+        variant: "destructive",
+      });
+    },
+    onSettled: () => {
+      setImportingProductId(null);
+    }
+  });
+
+  const handleImportData = (item: GoogleShoppingItem) => {
+    // Extract product ID from the link
+    const productIdMatch = item.link.match(/product_id=([^&]+)/);
+    if (!productIdMatch) {
+      toast({
+        title: "Fehler",
+        description: "Produkt-ID konnte nicht ermittelt werden.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const productId = productIdMatch[1];
+    setImportingProductId(productId);
+    importDataMutation.mutate(productId);
   };
 
   const handleClose = () => {
@@ -226,7 +284,30 @@ export default function GoogleShoppingModal({ isOpen, onClose, onSelectItem }: G
                               )}
                             </div>
 
-                            <div className="mt-2">
+                            <div className="mt-2 flex gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-6 px-2 text-xs flex-1"
+                                onClick={() => handleSelectItem(item)}
+                              >
+                                Auswählen
+                              </Button>
+                              
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-6 px-2 text-xs"
+                                onClick={() => handleImportData(item)}
+                                disabled={importingProductId === item.link.match(/product_id=([^&]+)/)?.[1]}
+                              >
+                                {importingProductId === item.link.match(/product_id=([^&]+)/)?.[1] ? (
+                                  <Loader2 className="h-3 w-3 animate-spin" />
+                                ) : (
+                                  <Download className="h-3 w-3" />
+                                )}
+                              </Button>
+                              
                               {item.link && item.link.trim() !== '' ? (
                                 <Button
                                   variant="ghost"
@@ -237,8 +318,7 @@ export default function GoogleShoppingModal({ isOpen, onClose, onSelectItem }: G
                                     window.open(item.link, '_blank', 'noopener,noreferrer');
                                   }}
                                 >
-                                  <ExternalLink className="h-3 w-3 mr-1" />
-                                  Details anzeigen
+                                  <ExternalLink className="h-3 w-3" />
                                 </Button>
                               ) : (
                                 <Button
@@ -251,8 +331,7 @@ export default function GoogleShoppingModal({ isOpen, onClose, onSelectItem }: G
                                     window.open(`https://google.de/search?q=${searchQuery}`, '_blank', 'noopener,noreferrer');
                                   }}
                                 >
-                                  <Search className="h-3 w-3 mr-1" />
-                                  Auf Google suchen
+                                  <Search className="h-3 w-3" />
                                 </Button>
                               )}
                             </div>

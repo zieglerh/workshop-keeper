@@ -219,6 +219,39 @@ export default function AddItemModal({ isOpen, onClose, categories }: AddItemMod
     setShowGoogleShopping(false);
   };
 
+  const handleGoogleShoppingImport = async (productData: any) => {
+    // Fill form with detailed product data from SerpAPI
+    if (productData.title) {
+      form.setValue("name", productData.title);
+    }
+    if (productData.description) {
+      form.setValue("description", productData.description);
+    }
+    if (productData.images && productData.images.length > 0) {
+      // Use the first high-quality image
+      const imageUrl = productData.images[0]?.url || productData.images[0];
+      if (imageUrl) {
+        form.setValue("imageUrl", imageUrl);
+        // Trigger automatic image download
+        await handleImageUrlChange(imageUrl);
+      }
+    }
+    
+    // If price information is available, set it for purchasable items
+    if (productData.price) {
+      setIsPurchasable(true);
+      // Try to extract numeric price
+      const priceMatch = productData.price.match(/[\d,.]+(,\d{2})?/);
+      if (priceMatch) {
+        const numericPrice = priceMatch[0].replace(',', '.');
+        setTotalCost(numericPrice);
+        handleTotalCostChange(numericPrice);
+      }
+    }
+    
+    setShowGoogleShopping(false);
+  };
+
   const onSubmit = (data: any) => {
     const formattedData = {
       ...data,
@@ -527,6 +560,7 @@ export default function AddItemModal({ isOpen, onClose, categories }: AddItemMod
           isOpen={showGoogleShopping}
           onClose={() => setShowGoogleShopping(false)}
           onSelectItem={handleGoogleShoppingSelect}
+          onImportData={handleGoogleShoppingImport}
         />
 
       </DialogContent>

@@ -13,6 +13,38 @@ export interface GoogleShoppingItem {
   reviews?: number;
 }
 
+export async function getProductDetails(productId: string): Promise<any> {
+  try {
+    const searchParams = {
+      api_key: SERPAPI_KEY,
+      engine: "google_product",
+      product_id: productId,
+      location: "Germany",
+      google_domain: "google.de",
+      gl: "de",
+      hl: "de"
+    };
+
+    console.log('SerpAPI Product Details Params:', searchParams);
+    const response = await getJson(searchParams);
+    console.log('SerpAPI Product Details Response:', JSON.stringify(response, null, 2));
+    
+    return {
+      title: response.product_results?.title || '',
+      description: response.product_results?.description || '',
+      images: response.product_results?.images || [],
+      price: response.product_results?.price || '',
+      source: response.product_results?.source || '',
+      rating: response.product_results?.rating ? parseFloat(response.product_results.rating) : undefined,
+      reviews: response.product_results?.reviews ? parseInt(response.product_results.reviews.toString().replace(/[^\d]/g, '')) : undefined
+    };
+
+  } catch (error) {
+    console.error('Error fetching product details:', error);
+    throw new Error(`SerpAPI Product Details Error: ${error.message || 'Failed to fetch product details'}`);
+  }
+}
+
 export async function searchGoogleShopping(query: string): Promise<GoogleShoppingItem[]> {
   try {
     const searchParams = {
