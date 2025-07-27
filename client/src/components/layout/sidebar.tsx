@@ -54,36 +54,34 @@ export default function Sidebar() {
       </nav>
 
       <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-surface">
-        <div className="flex items-center space-x-3">
+        <button
+          onClick={() => setLocation('/profile')}
+          className="flex items-center space-x-3 w-full text-left hover:bg-gray-50 rounded-lg p-2 transition-colors group"
+          title="Edit Profile"
+        >
           {user?.profileImageUrl ? (
             <img 
               src={user.profileImageUrl} 
-              alt={user.name || user.email || ''} 
+              alt={user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.username} 
               className="w-10 h-10 rounded-full object-cover"
             />
           ) : (
             <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
               <span className="text-white font-medium text-sm">
-                {(user?.name || user?.email || '?').charAt(0).toUpperCase()}
+                {user?.username?.charAt(0).toUpperCase() || '?'}
               </span>
             </div>
           )}
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 truncate">
-              {user?.name || user?.email}
+            <p className="text-sm font-medium text-gray-900 truncate group-hover:text-primary">
+              {user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : user?.username}
             </p>
             <p className="text-xs text-gray-500">
-              {user?.role === 'admin' ? 'Admin' : 'User'}
+              {user?.role === 'admin' ? 'Administrator' : 'User'} • Click to edit profile
             </p>
           </div>
-          <button 
-            onClick={() => window.location.href = "/api/logout"}
-            className="text-gray-400 hover:text-gray-600"
-            title="Sign out"
-          >
-            <i className="fas fa-sign-out-alt"></i>
-          </button>
-        </div>
+          <User className="h-4 w-4 text-gray-400 group-hover:text-primary" />
+        </button>
       </div>
     </aside>
   );

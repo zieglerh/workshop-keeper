@@ -56,14 +56,14 @@ export default function Profile() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       toast({
-        title: "Profil aktualisiert",
-        description: "Ihre Profildaten wurden erfolgreich gespeichert",
+        title: "Profile updated",
+        description: "Your profile data has been successfully saved",
       });
     },
     onError: (error: Error) => {
       toast({
-        title: "Fehler",
-        description: error.message || "Fehler beim Aktualisieren des Profils",
+        title: "Error",
+        description: error.message || "Error updating profile",
         variant: "destructive",
       });
     },
@@ -83,14 +83,14 @@ export default function Profile() {
         confirmPassword: '',
       });
       toast({
-        title: "Passwort geändert",
-        description: "Ihr Passwort wurde erfolgreich aktualisiert",
+        title: "Password changed",
+        description: "Your password has been successfully updated",
       });
     },
     onError: (error: Error) => {
       toast({
-        title: "Fehler",
-        description: error.message || "Fehler beim Ändern des Passworts",
+        title: "Error",
+        description: error.message || "Error changing password",
         variant: "destructive",
       });
     },
@@ -102,15 +102,15 @@ export default function Profile() {
     },
     onSuccess: () => {
       toast({
-        title: "Konto gelöscht",
-        description: "Ihr Konto wurde erfolgreich gelöscht",
+        title: "Account deleted",
+        description: "Your account has been successfully deleted",
       });
       window.location.href = '/';
     },
     onError: (error: Error) => {
       toast({
-        title: "Fehler",
-        description: error.message || "Fehler beim Löschen des Kontos",
+        title: "Error",
+        description: error.message || "Error deleting account",
         variant: "destructive",
       });
     },
@@ -130,8 +130,8 @@ export default function Profile() {
     
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       toast({
-        title: "Fehler",
-        description: "Die neuen Passwörter stimmen nicht überein",
+        title: "Error",
+        description: "The new passwords do not match",
         variant: "destructive",
       });
       return;
@@ -139,8 +139,8 @@ export default function Profile() {
 
     if (passwordData.newPassword.length < 6) {
       toast({
-        title: "Fehler",
-        description: "Das neue Passwort muss mindestens 6 Zeichen lang sein",
+        title: "Error",
+        description: "The new password must be at least 6 characters long",
         variant: "destructive",
       });
       return;
@@ -158,9 +158,9 @@ export default function Profile() {
             <div>
               <h1 className="text-3xl font-bold tracking-tight flex items-center">
                 <User className="mr-3 h-8 w-8" />
-                Mein Profil
+                My Profile
               </h1>
-              <p className="text-muted-foreground">Verwalten Sie Ihre Kontoinformationen und Einstellungen</p>
+              <p className="text-muted-foreground">Manage your account information and settings</p>
             </div>
             <Button
               onClick={handleLogout}
@@ -168,7 +168,7 @@ export default function Profile() {
               size="sm"
             >
               <LogOut className="mr-2 h-4 w-4" />
-              Abmelden
+              Sign Out
             </Button>
           </div>
         </div>
@@ -179,50 +179,50 @@ export default function Profile() {
             <CardHeader>
               <CardTitle className="flex items-center">
                 <User className="mr-2 h-5 w-5" />
-                Profil-Informationen
+                Profile Information
               </CardTitle>
               <CardDescription>
-                Aktualisieren Sie Ihre persönlichen Daten
+                Update your personal information
               </CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleProfileSubmit} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="firstName">Vorname</Label>
+                    <Label htmlFor="firstName">First Name</Label>
                     <Input
                       id="firstName"
                       type="text"
                       value={profileData.firstName}
                       onChange={(e) => setProfileData(prev => ({ ...prev, firstName: e.target.value }))}
-                      placeholder="Ihr Vorname"
+                      placeholder="Your first name"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="lastName">Nachname</Label>
+                    <Label htmlFor="lastName">Last Name</Label>
                     <Input
                       id="lastName"
                       type="text"
                       value={profileData.lastName}
                       onChange={(e) => setProfileData(prev => ({ ...prev, lastName: e.target.value }))}
-                      placeholder="Ihr Nachname"
+                      placeholder="Your last name"
                     />
                   </div>
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="email">E-Mail-Adresse</Label>
+                  <Label htmlFor="email">Email Address</Label>
                   <Input
                     id="email"
                     type="email"
                     value={profileData.email}
                     onChange={(e) => setProfileData(prev => ({ ...prev, email: e.target.value }))}
-                    placeholder="ihre.email@beispiel.de"
+                    placeholder="your.email@example.com"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Benutzername</Label>
+                  <Label>Username</Label>
                   <Input
                     type="text"
                     value={user.username}
@@ -230,7 +230,7 @@ export default function Profile() {
                     className="bg-muted"
                   />
                   <p className="text-sm text-muted-foreground">
-                    Der Benutzername kann nicht geändert werden
+                    Username cannot be changed
                   </p>
                 </div>
 
@@ -240,7 +240,7 @@ export default function Profile() {
                   className="w-full sm:w-auto"
                 >
                   <Save className="mr-2 h-4 w-4" />
-                  {updateProfileMutation.isPending ? 'Speichern...' : 'Profil speichern'}
+                  {updateProfileMutation.isPending ? 'Saving...' : 'Save Profile'}
                 </Button>
               </form>
             </CardContent>
@@ -251,48 +251,48 @@ export default function Profile() {
             <CardHeader>
               <CardTitle className="flex items-center">
                 <Lock className="mr-2 h-5 w-5" />
-                Passwort ändern
+                Change Password
               </CardTitle>
               <CardDescription>
-                Aktualisieren Sie Ihr Passwort für mehr Sicherheit
+                Update your password for better security
               </CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handlePasswordSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="currentPassword">Aktuelles Passwort</Label>
+                  <Label htmlFor="currentPassword">Current Password</Label>
                   <Input
                     id="currentPassword"
                     type="password"
                     value={passwordData.currentPassword}
                     onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
                     required
-                    placeholder="Ihr aktuelles Passwort"
+                    placeholder="Your current password"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="newPassword">Neues Passwort</Label>
+                  <Label htmlFor="newPassword">New Password</Label>
                   <Input
                     id="newPassword"
                     type="password"
                     value={passwordData.newPassword}
                     onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
                     required
-                    placeholder="Neues sicheres Passwort"
+                    placeholder="New secure password"
                     minLength={6}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Neues Passwort bestätigen</Label>
+                  <Label htmlFor="confirmPassword">Confirm New Password</Label>
                   <Input
                     id="confirmPassword"
                     type="password"
                     value={passwordData.confirmPassword}
                     onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
                     required
-                    placeholder="Neues Passwort wiederholen"
+                    placeholder="Repeat new password"
                     minLength={6}
                   />
                 </div>
@@ -303,7 +303,7 @@ export default function Profile() {
                   className="w-full sm:w-auto"
                 >
                   <Lock className="mr-2 h-4 w-4" />
-                  {changePasswordMutation.isPending ? 'Wird geändert...' : 'Passwort ändern'}
+                  {changePasswordMutation.isPending ? 'Changing...' : 'Change Password'}
                 </Button>
               </form>
             </CardContent>
@@ -314,18 +314,18 @@ export default function Profile() {
             <CardHeader>
               <CardTitle className="flex items-center text-destructive">
                 <Trash2 className="mr-2 h-5 w-5" />
-                Gefahrenbereich
+                Danger Zone
               </CardTitle>
               <CardDescription>
-                Irreversible Aktionen für Ihr Konto
+                Irreversible actions for your account
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <Alert variant="destructive">
                 <Trash2 className="h-4 w-4" />
                 <AlertDescription>
-                  Das Löschen Ihres Kontos ist endgültig und kann nicht rückgängig gemacht werden.
-                  Alle Ihre Daten werden dauerhaft gelöscht.
+                  Deleting your account is permanent and cannot be undone.
+                  All your data will be permanently deleted.
                 </AlertDescription>
               </Alert>
 
@@ -335,25 +335,25 @@ export default function Profile() {
                 <AlertDialogTrigger asChild>
                   <Button variant="destructive" className="w-full sm:w-auto">
                     <Trash2 className="mr-2 h-4 w-4" />
-                    Konto löschen
+                    Delete Account
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Konto wirklich löschen?</AlertDialogTitle>
+                    <AlertDialogTitle>Really delete account?</AlertDialogTitle>
                     <AlertDialogDescription>
-                      Diese Aktion kann nicht rückgängig gemacht werden. Ihr Konto und alle
-                      damit verbundenen Daten werden dauerhaft gelöscht.
+                      This action cannot be undone. Your account and all
+                      associated data will be permanently deleted.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <AlertDialogAction
                       onClick={() => deleteAccountMutation.mutate()}
                       className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                       disabled={deleteAccountMutation.isPending}
                     >
-                      {deleteAccountMutation.isPending ? 'Wird gelöscht...' : 'Ja, Konto löschen'}
+                      {deleteAccountMutation.isPending ? 'Deleting...' : 'Yes, delete account'}
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
