@@ -11,7 +11,7 @@ import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
-import { Search, Star, Truck, ExternalLink } from "lucide-react";
+import { Search, Star, Truck, ExternalLink, Loader2 } from "lucide-react";
 
 interface GoogleShoppingItem {
   title: string;
