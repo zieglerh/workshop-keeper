@@ -34,6 +34,7 @@ export const users = pgTable("users", {
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
+  profileImagePath: varchar("profile_image_path"), // for uploaded images
   role: varchar("role").notNull().default("user"), // 'admin' or 'user'
   name: varchar("name"),
   phone: varchar("phone"),
@@ -59,7 +60,8 @@ export const inventoryItems = pgTable("inventory_items", {
   categoryId: varchar("category_id").references(() => categories.id).notNull(),
   location: varchar("location").notNull(),
   purchaseDate: timestamp("purchase_date").notNull(),
-  imageUrl: text("image_url"),
+  imageUrl: text("image_url"), // optional URL fallback
+  imagePath: text("image_path"), // primary uploaded image path
   isPurchasable: boolean("is_purchasable").notNull().default(false),
   pricePerUnit: decimal("price_per_unit", { precision: 10, scale: 2 }),
   stockQuantity: integer("stock_quantity").default(1),

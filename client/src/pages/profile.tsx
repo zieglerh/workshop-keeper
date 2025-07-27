@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
@@ -11,11 +11,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { User, Lock, Trash2, Save, LogOut } from "lucide-react";
+import { User, Lock, Trash2, Save, LogOut, Upload, Camera } from "lucide-react";
 
 export default function Profile() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [profileData, setProfileData] = useState({
     firstName: user?.firstName || '',
@@ -48,6 +49,38 @@ export default function Profile() {
       });
     }
   };
+
+  const uploadImageMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('image', file);
+      
+      const response = await fetch(`/api/users/${user?.id}/upload-image`, {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to upload image');
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Profile image updated",
+        description: "Your profile image has been updated successfully.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error uploading image",
+        description: "Failed to update profile image. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: typeof profileData) => {
@@ -149,6 +182,41 @@ export default function Profile() {
     changePasswordMutation.mutate(passwordData);
   };
 
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        toast({
+          title: "File too large",
+          description: "Please select an image smaller than 5MB.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: "Invalid file type",
+          description: "Please select an image file.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      uploadImageMutation.mutate(file);
+    }
+  };
+
+  const getProfileImageSrc = () => {
+    if (user?.profileImagePath) {
+      return `/${user.profileImagePath}`;
+    }
+    if (user?.profileImageUrl) {
+      return user.profileImageUrl;
+    }
+    return null;
+  };
+
   return (
     <div className="min-h-screen flex bg-background">
       <Sidebar />
@@ -174,6 +242,55 @@ export default function Profile() {
         </div>
 
         <div className="p-6 space-y-6">
+          {/* Profile Image */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Camera className="mr-2 h-5 w-5" />
+                Profile Image
+              </CardTitle>
+              <CardDescription>
+                Upload a profile picture
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center space-x-4">
+                <div className="w-24 h-24 rounded-full border-2 border-border overflow-hidden bg-muted flex items-center justify-center">
+                  {getProfileImageSrc() ? (
+                    <img 
+                      src={getProfileImageSrc()!} 
+                      alt="Profile" 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <User className="w-12 h-12 text-muted-foreground" />
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadImageMutation.isPending}
+                  >
+                    <Upload className="mr-2 h-4 w-4" />
+                    {uploadImageMutation.isPending ? 'Uploading...' : 'Upload Image'}
+                  </Button>
+                  <p className="text-sm text-muted-foreground">
+                    JPG, PNG or GIF (max. 5MB)
+                  </p>
+                </div>
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+              />
+            </CardContent>
+          </Card>
+
           {/* Profile Information */}
           <Card>
             <CardHeader>

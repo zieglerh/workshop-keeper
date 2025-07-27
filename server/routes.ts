@@ -8,10 +8,19 @@ import {
   insertPurchaseSchema,
 } from "@shared/schema";
 import { z } from "zod";
+import { upload, deleteUploadedFile } from "./upload";
+import path from "path";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
   await setupAuth(app);
+
+  // Serve uploaded files statically
+  app.use('/uploads', (req, res, next) => {
+    // Add proper headers for images
+    res.header('Cache-Control', 'public, max-age=31536000');
+    next();
+  });
 
   // Auth routes
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
@@ -39,6 +48,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "Erfolgreich abgemeldet" 
       });
     });
+  });
+
+  // Profile image upload
+  app.post('/api/users/:id/upload-image', isAuthenticated, upload.single('image'), async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.id);
+      
+      // Users can upload their own image, admins can upload for anyone
+      if (req.params.id !== req.user.id && currentUser?.role !== 'admin') {
+        return res.status(403).json({ message: "Permission denied" });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({ message: "No image file provided" });
+      }
+
+      const imagePath = req.file.path;
+      
+      // Get current user to delete old image
+      const userToUpdate = await storage.getUser(req.params.id);
+      if (userToUpdate?.profileImagePath) {
+        deleteUploadedFile(userToUpdate.profileImagePath);
+      }
+
+      // Update user with new image path
+      const updatedUser = await storage.updateUserProfile(req.params.id, {
+        profileImagePath: imagePath,
+      });
+
+      res.json({ 
+        success: true, 
+        imagePath,
+        user: updatedUser
+      });
+    } catch (error) {
+      console.error("Error uploading profile image:", error);
+      res.status(500).json({ message: "Error uploading image" });
+    }
   });
 
   // User management routes (admin only)
@@ -389,6 +436,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error returning item:", error);
       res.status(500).json({ message: "Failed to return item" });
+    }
+  });
+
+  // Inventory image upload
+  app.post('/api/inventory/:id/upload-image', isAuthenticated, upload.single('image'), async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.id);
+      if (currentUser?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({ message: "No image file provided" });
+      }
+
+      const imagePath = req.file.path;
+      
+      // Get current item to delete old image
+      const itemToUpdate = await storage.getInventoryItem(req.params.id);
+      if (itemToUpdate?.imagePath) {
+        deleteUploadedFile(itemToUpdate.imagePath);
+      }
+
+      // Update inventory item with new image path
+      const updatedItem = await storage.updateInventoryItem(req.params.id, {
+        imagePath,
+      });
+
+      res.json({ 
+        success: true, 
+        imagePath,
+        item: updatedItem
+      });
+    } catch (error) {
+      console.error("Error uploading inventory image:", error);
+      res.status(500).json({ message: "Error uploading image" });
     }
   });
 

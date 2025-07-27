@@ -12,7 +12,7 @@ import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import type { Category } from "@shared/schema";
 
 interface AddItemModalProps {
@@ -24,6 +24,8 @@ interface AddItemModalProps {
 export default function AddItemModal({ isOpen, onClose, categories }: AddItemModalProps) {
   const { toast } = useToast();
   const [isPurchasable, setIsPurchasable] = useState(false);
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm({
     resolver: zodResolver(insertInventoryItemSchema),
@@ -42,7 +44,21 @@ export default function AddItemModal({ isOpen, onClose, categories }: AddItemMod
 
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
-      await apiRequest("POST", "/api/inventory", data);
+      // First create the item
+      const response = await apiRequest("POST", "/api/inventory", data);
+      
+      // Then upload image if one was selected
+      if (uploadedImage && fileInputRef.current?.files?.[0]) {
+        const formData = new FormData();
+        formData.append('image', fileInputRef.current.files[0]);
+        
+        await fetch(`/api/inventory/${response.id}/upload-image`, {
+          method: 'POST',
+          body: formData,
+        });
+      }
+      
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
@@ -53,6 +69,7 @@ export default function AddItemModal({ isOpen, onClose, categories }: AddItemMod
       });
       onClose();
       form.reset();
+      setUploadedImage(null);
       setIsPurchasable(false);
     },
     onError: (error: Error) => {
@@ -74,6 +91,33 @@ export default function AddItemModal({ isOpen, onClose, categories }: AddItemMod
       });
     },
   });
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        toast({
+          title: "File too large",
+          description: "Please select an image smaller than 5MB.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: "Invalid file type",
+          description: "Please select an image file.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Create preview URL
+      const previewUrl = URL.createObjectURL(file);
+      setUploadedImage(previewUrl);
+    }
+  };
 
   const onSubmit = (data: any) => {
     const formattedData = {
@@ -179,14 +223,74 @@ export default function AddItemModal({ isOpen, onClose, categories }: AddItemMod
             </div>
           </div>
 
-          <div>
-            <Label htmlFor="imageUrl">Image URL (optional)</Label>
-            <Input
-              id="imageUrl"
-              {...form.register("imageUrl")}
-              placeholder="https://example.com/image.jpg"
-              className="mt-1"
-            />
+          {/* Image Upload Section */}
+          <div className="space-y-4">
+            <div>
+              <Label>Item Image</Label>
+              <div className="mt-2 flex items-start space-x-4">
+                <div className="w-32 h-32 border-2 border-dashed border-border rounded-lg overflow-hidden bg-muted flex items-center justify-center">
+                  {uploadedImage ? (
+                    <img 
+                      src={uploadedImage} 
+                      alt="Preview" 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="text-center text-muted-foreground">
+                      <div className="text-2xl">📷</div>
+                      <div className="text-xs">No image</div>
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    Upload Image
+                  </Button>
+                  <p className="text-sm text-muted-foreground">
+                    JPG, PNG or GIF (max. 5MB)
+                  </p>
+                  {uploadedImage && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setUploadedImage(null);
+                        if (fileInputRef.current) {
+                          fileInputRef.current.value = '';
+                        }
+                      }}
+                    >
+                      Remove Image
+                    </Button>
+                  )}
+                </div>
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="imageUrl">Or Image URL (optional fallback)</Label>
+              <Input
+                id="imageUrl"
+                {...form.register("imageUrl")}
+                placeholder="https://example.com/image.jpg"
+                className="mt-1"
+              />
+              <p className="text-sm text-muted-foreground mt-1">
+                URL will be used only if no image is uploaded
+              </p>
+            </div>
           </div>
 
           <div className="flex items-center space-x-2">

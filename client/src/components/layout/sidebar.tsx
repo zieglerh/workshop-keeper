@@ -58,7 +58,13 @@ export default function Sidebar() {
           className="flex items-center space-x-3 w-full text-left hover:bg-gray-50 rounded-lg p-2 transition-colors group"
           title="Edit Profile"
         >
-          {user?.profileImageUrl ? (
+          {user?.profileImagePath ? (
+            <img 
+              src={`/${user.profileImagePath}`} 
+              alt={user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.username} 
+              className="w-10 h-10 rounded-full object-cover"
+            />
+          ) : user?.profileImageUrl ? (
             <img 
               src={user.profileImageUrl} 
               alt={user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.username} 
