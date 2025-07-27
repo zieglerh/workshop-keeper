@@ -56,7 +56,6 @@ export default function Register() {
         firstName: formData.firstName || null,
         lastName: formData.lastName || null,
         phone: formData.phone || null,
-        lastName: formData.lastName || null,
       });
 
       setSuccess(true);

@@ -9,6 +9,7 @@ import {
 } from "@shared/schema";
 import { z } from "zod";
 import { upload, deleteUploadedFile } from "./upload";
+import { sendBorrowNotification } from "./emailService";
 import path from "path";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -184,7 +185,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
 
-      const { username, firstName, lastName, email, password, role } = req.body;
+      const { username, firstName, lastName, email, phone, password, role } = req.body;
       
       if (!username || !password) {
         return res.status(400).json({ message: "Username and password are required" });
@@ -209,6 +210,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         firstName: firstName || null,
         lastName: lastName || null,
         email: email || null,
+        phone: phone || null,
         password,
         role: role || 'user',
       });
@@ -416,7 +418,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Borrowing routes
   app.post("/api/inventory/:id/borrow", isAuthenticated, async (req: any, res) => {
     try {
+      // Get item and user details for email notification
+      const item = await storage.getInventoryItem(req.params.id);
+      const borrower = await storage.getUser(req.user.id);
+      
+      if (!item) {
+        return res.status(404).json({ message: "Item not found" });
+      }
+      
+      if (!item.isAvailable) {
+        return res.status(400).json({ message: "Item is not available for borrowing" });
+      }
+
+      // Borrow the item
       await storage.borrowItem(req.params.id, req.user.id);
+      
+      // Send email notification to all admins
+      try {
+        const allAdmins = await storage.getUsersByRole('admin');
+        const adminEmails = allAdmins
+          .map(admin => admin.email)
+          .filter(email => email !== null && email !== '') as string[];
+        
+        if (adminEmails.length > 0) {
+          const borrowerName = borrower ? 
+            (borrower.firstName && borrower.lastName 
+              ? `${borrower.firstName} ${borrower.lastName}`
+              : borrower.username || borrower.email || 'Unknown User')
+            : 'Unknown User';
+
+          await sendBorrowNotification({
+            itemName: item.name,
+            borrowerName,
+            borrowerEmail: borrower?.email || undefined,
+            borrowDate: new Date().toLocaleDateString('de-DE', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            }),
+            adminEmails
+          });
+        }
+      } catch (emailError) {
+        console.error("Error sending borrow notification email:", emailError);
+        // Don't fail the borrowing process if email fails
+      }
+      
       res.json({ success: true });
     } catch (error) {
       console.error("Error borrowing item:", error);
@@ -538,6 +587,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching stats:", error);
       res.status(500).json({ message: "Failed to fetch stats" });
+    }
+  });
+
+  // Test email endpoint (admin only)
+  app.post("/api/test-email", isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.id);
+      if (currentUser?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      // Test email with current admin
+      const success = await sendBorrowNotification({
+        itemName: "Test-Gegenstand",
+        borrowerName: "Test-Benutzer",
+        borrowerEmail: "test@example.com",
+        borrowDate: new Date().toLocaleDateString('de-DE', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        }),
+        adminEmails: currentUser.email ? [currentUser.email] : []
+      });
+
+      res.json({ 
+        success, 
+        message: success ? "Test email sent successfully" : "Failed to send test email",
+        email: currentUser.email
+      });
+    } catch (error) {
+      console.error("Error sending test email:", error);
+      res.status(500).json({ message: "Error sending test email" });
     }
   });
 
