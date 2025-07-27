@@ -126,6 +126,7 @@ The application uses PostgreSQL with the following core entities:
 - **Configurable User Notifications**: Database-driven notification templates system with admin management interface
 - **Intelligent Price Calculator**: Automatic price-per-unit calculation based on total purchase cost and quantity in add item form
 - **Automatic Image Download**: URLs entered in image fields are automatically downloaded and stored locally for offline access
+- **Google Shopping Links**: Direct product links using SerpAPI product API for accurate shop redirects
 
 
 The application is designed to run efficiently on Replit's infrastructure with secure username/password authentication and admin-controlled user registration.
