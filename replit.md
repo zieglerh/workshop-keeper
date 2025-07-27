@@ -125,6 +125,6 @@ The application uses PostgreSQL with the following core entities:
 - **Email Events**: Automated notifications for item borrowing, purchases, and new user registrations
 - **Configurable User Notifications**: Database-driven notification templates system with admin management interface
 - **Intelligent Price Calculator**: Automatic price-per-unit calculation based on total purchase cost and quantity in add item form
-- **Idealo Integration**: Web scraping-based product import from Idealo.de with fallback for network restrictions
+
 
 The application is designed to run efficiently on Replit's infrastructure with secure username/password authentication and admin-controlled user registration.

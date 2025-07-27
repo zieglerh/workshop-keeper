@@ -16,7 +16,6 @@ import { useState, useRef } from "react";
 
 import type { Category } from "@shared/schema";
 import GoogleShoppingModal from "./google-shopping-modal";
-import IdealoImportModal from "./idealo-import-modal";
 
 interface AddItemModalProps {
   isOpen: boolean;
@@ -31,7 +30,6 @@ export default function AddItemModal({ isOpen, onClose, categories }: AddItemMod
   const [totalCost, setTotalCost] = useState<string>("");
   const [quantity, setQuantity] = useState<string>("1");
   const [showGoogleShopping, setShowGoogleShopping] = useState(false);
-  const [showIdealoImport, setShowIdealoImport] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -172,35 +170,6 @@ export default function AddItemModal({ isOpen, onClose, categories }: AddItemMod
     setShowGoogleShopping(false);
   };
 
-  const handleIdealoImport = (product: any) => {
-    form.setValue("name", product.title);
-    
-    // Set description from specifications
-    if (product.specifications && Object.keys(product.specifications).length > 0) {
-      const specsText = Object.entries(product.specifications)
-        .map(([key, value]) => `${key}: ${value}`)
-        .join('\n');
-      form.setValue("description", specsText);
-    }
-    
-    // Set price if available
-    if (product.price) {
-      const priceValue = parseFloat(product.price.replace(/[^\d.,]/g, '').replace(',', '.'));
-      if (!isNaN(priceValue)) {
-        setTotalCost(priceValue.toString());
-        form.setValue("price", priceValue);
-      }
-    }
-    
-    // Set image if available
-    if (product.imageUrl) {
-      form.setValue("imageUrl", product.imageUrl);
-      setUploadedImage(product.imageUrl);
-    }
-    
-    setShowIdealoImport(false);
-  };
-
   const onSubmit = (data: any) => {
     const formattedData = {
       ...data,
@@ -225,15 +194,6 @@ export default function AddItemModal({ isOpen, onClose, categories }: AddItemMod
               className="flex items-center gap-2"
             >
               🛒 Add Google Item
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setShowIdealoImport(true)}
-              className="flex items-center gap-2"
-            >
-              📦 Import from Idealo
             </Button>
           </div>
         </DialogHeader>
@@ -510,12 +470,7 @@ export default function AddItemModal({ isOpen, onClose, categories }: AddItemMod
           onClose={() => setShowGoogleShopping(false)}
           onSelectItem={handleGoogleShoppingSelect}
         />
-        
-        <IdealoImportModal
-          isOpen={showIdealoImport}
-          onClose={() => setShowIdealoImport(false)}
-          onImportProduct={handleIdealoImport}
-        />
+
       </DialogContent>
     </Dialog>
   );

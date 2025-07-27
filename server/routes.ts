@@ -339,34 +339,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Idealo product extraction route
-  app.post("/api/extract-idealo-product", isAuthenticated, async (req: Request & { user: any }, res: Response) => {
-    try {
-      const currentUser = await storage.getUser(req.user.id);
-      if (currentUser?.role !== 'admin') {
-        return res.status(403).json({ message: "Admin access required" });
-      }
-
-      const { url } = req.body;
-      if (!url) {
-        return res.status(400).json({ message: "Product URL is required" });
-      }
-
-      const { extractIdealoProduct, isValidIdealoUrl } = await import('./idealoScraper');
-      
-      if (!isValidIdealoUrl(url)) {
-        return res.status(400).json({ message: "Invalid Idealo URL" });
-      }
-
-      const productDetails = await extractIdealoProduct(url);
-      console.log('Sending Idealo product details to frontend:', productDetails);
-      res.json(productDetails);
-    } catch (error) {
-      console.error("Error extracting Idealo product:", error);
-      res.status(500).json({ message: "Failed to extract product details" });
-    }
-  });
-
   // Google Shopping search route
   app.post("/api/search-google-shopping", isAuthenticated, async (req: Request & { user: any }, res: Response) => {
     try {
