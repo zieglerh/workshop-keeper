@@ -29,35 +29,35 @@ export async function extractIdealoProduct(productUrl: string): Promise<IdealoPr
 
     // Get categories from database
     const categories = await storage.getAllCategories();
-    const categoryList = categories.map(cat => `• ${cat.name} - ${cat.description || 'Verschiedene Artikel'}`).join('\n');
+    const categoryList = categories.map(cat => `• ${cat.name} - ${cat.description || 'Various items'}`).join('\n');
 
     // Extract relevant data using OpenAI without web scraping
     const prompt = `
-Analysiere diese Idealo.de Produkt-URL und extrahiere Produktinformationen basierend auf der URL-Struktur und deinem Wissen über typische Idealo-Produkte.
+Analyze this Idealo.de product URL and extract product information based on the URL structure and your knowledge of typical Idealo products.
 
 URL: ${productUrl}
 
-Verfügbare Kategorien aus der Datenbank:
+Available categories from database:
 ${categoryList}
 
-Aufgabe:
-Basierend auf der URL und dem Produktnamen in der URL, erstelle realistische Produktinformationen für ein deutsches Werkstatt-Inventarsystem.
+Task:
+Based on the URL and product name in the URL, create realistic product information for a workshop inventory system.
 
-Extrahiere/Erstelle:
-- name: Produktname (basierend auf URL-Segmenten)
-- category: Eine der verfügbaren Kategorien (exakt wie oben aufgelistet, am besten passend)
-- description: Realistische deutsche Produktbeschreibung (2-3 Sätze)
-- image: Verwende die Url aus dem Header
-- price: Realistischer Preis in Euro (z.B. "29.99")
-- quantity: Standardmenge (meist 1, außer bei Packungen)
+Extract/Create:
+- name: Product name (based on URL segments)
+- category: One of the available categories (exactly as listed above, best match)
+- description: Realistic product description (2-3 sentences)
+- image: Use URL from header
+- price: Realistic price in Euro (e.g. "29.99")
+- quantity: Standard quantity (usually 1, except for packages)
 
-Beispiel für "spax-schrauben":
-- name: "SPAX Universalschrauben 4x60mm"
+Example for "spax-screws":
+- name: "SPAX Universal Screws 4x60mm"
 - category: "Material & Supply - Consumables"
-- description: "Hochwertige SPAX Universalschrauben mit T-STAR plus Antrieb. Ideal für Holzverbindungen und vielseitige Befestigungsarbeiten."
+- description: "High-quality SPAX universal screws with T-STAR plus drive. Ideal for wood connections and versatile fastening work."
 - image: https://cdn.idealo.com/folder/Product/5295/5/5295589/s1_produktbild_gross/spax-4x60-t-star-t20-500-st-191010400603.jpg
 
-Antworte nur mit gültigem JSON in diesem Format:
+Respond only with valid JSON in this format:
 {
   "name": "string",
   "category": "string",
@@ -73,7 +73,7 @@ Antworte nur mit gültigem JSON in diesem Format:
       messages: [
         {
           role: "system",
-          content: "Du bist ein Experte für deutsche Werkzeuge und Industrieprodukte. Analysiere Idealo.de URLs und erstelle realistische Produktdaten für ein Werkstatt-Inventarsystem. Antworte nur mit gültigem JSON."
+          content: "You are an expert for German tools and industrial products. Analyze Idealo.de URLs and create realistic product data for a workshop inventory system. Respond only with valid JSON."
         },
         {
           role: "user",

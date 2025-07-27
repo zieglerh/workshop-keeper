@@ -118,11 +118,11 @@ export default function NotificationManager() {
     <div className="space-y-6">
       <div className="flex items-center space-x-2">
         <MessageSquare className="h-6 w-6 text-primary" />
-        <h2 className="text-2xl font-bold">Benachrichtigungsvorlagen</h2>
+        <h2 className="text-2xl font-bold">Notification Templates</h2>
       </div>
       
       <p className="text-gray-600">
-        Verwalten Sie die Nachrichten, die Benutzern nach Käufen und Ausleihen angezeigt werden.
+        Manage messages shown to users after purchases and borrowing.
       </p>
 
       <div className="space-y-4">
@@ -135,7 +135,7 @@ export default function NotificationManager() {
                     {getTypeLabel(template.type)}
                   </Badge>
                   <Badge variant={template.isActive ? "default" : "outline"}>
-                    {template.isActive ? "Aktiv" : "Inaktiv"}
+                    {template.isActive ? "Active" : "Inactive"}
                   </Badge>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -155,19 +155,19 @@ export default function NotificationManager() {
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
-                        <AlertDialogTitle>Vorlage löschen</AlertDialogTitle>
+                        <AlertDialogTitle>Delete Template</AlertDialogTitle>
                         <AlertDialogDescription>
-                          Sind Sie sich sicher, dass Sie diese Benachrichtigungsvorlage löschen möchten? 
-                          Diese Aktion kann nicht rückgängig gemacht werden.
+                          Are you sure you want to delete this notification template? 
+                          This action cannot be undone.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
-                        <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
                         <AlertDialogAction
                           onClick={() => handleDelete(template)}
                           className="bg-destructive hover:bg-destructive/90"
                         >
-                          Löschen
+                          Delete
                         </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
@@ -179,21 +179,21 @@ export default function NotificationManager() {
               {editingTemplate?.id === template.id ? (
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="title">Titel</Label>
+                    <Label htmlFor="title">Title</Label>
                     <Input
                       id="title"
                       value={editForm.title}
                       onChange={(e) => setEditForm(prev => ({ ...prev, title: e.target.value }))}
-                      placeholder="Benachrichtungstitel"
+                      placeholder="Notification title"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="message">Nachricht</Label>
+                    <Label htmlFor="message">Message</Label>
                     <Textarea
                       id="message"
                       value={editForm.message}
                       onChange={(e) => setEditForm(prev => ({ ...prev, message: e.target.value }))}
-                      placeholder="Benachrichtigungstext"
+                      placeholder="Notification text"
                       rows={4}
                     />
                   </div>
@@ -202,16 +202,16 @@ export default function NotificationManager() {
                       checked={editForm.isActive}
                       onCheckedChange={(checked) => setEditForm(prev => ({ ...prev, isActive: checked }))}
                     />
-                    <Label>Aktiv</Label>
+                    <Label>Active</Label>
                   </div>
                   <div className="flex items-center space-x-2 pt-2">
                     <Button onClick={saveEdit} disabled={updateMutation.isPending}>
                       <Save className="h-4 w-4 mr-2" />
-                      Speichern
+                      Save
                     </Button>
                     <Button variant="outline" onClick={cancelEdit}>
                       <X className="h-4 w-4 mr-2" />
-                      Abbrechen
+                      Cancel
                     </Button>
                   </div>
                 </div>
@@ -231,10 +231,10 @@ export default function NotificationManager() {
           <CardContent className="text-center p-8">
             <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-600 mb-2">
-              Keine Benachrichtigungsvorlagen gefunden
+              No Notification Templates Found
             </h3>
             <p className="text-gray-500">
-              Es wurden noch keine Benachrichtigungsvorlagen erstellt.
+              No notification templates have been created yet.
             </p>
           </CardContent>
         </Card>

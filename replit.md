@@ -2,11 +2,12 @@
 
 ## Overview
 
-WorkshopTracker is a professional inventory management system designed for workshops with German language interface. It provides comprehensive tools for managing tools, equipment, categories, user access, and tracking borrowing/sales activities. The application features username/password authentication with admin approval for new registrations, replacing the previous OAuth system. The application follows a full-stack architecture with a React frontend, Express.js backend, and PostgreSQL database using Drizzle ORM.
+WorkshopTracker is a professional inventory management system designed for workshops with English language interface. It provides comprehensive tools for managing tools, equipment, categories, user access, and tracking borrowing/sales activities. The application features username/password authentication with admin approval for new registrations, replacing the previous OAuth system. The application follows a full-stack architecture with a React frontend, Express.js backend, and PostgreSQL database using Drizzle ORM.
 
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
+UI Language: English interface preferred - all UI elements should be in English.
 Image handling: Manual code adjustments preferred - no automatic image logic changes.
 
 ## System Architecture
@@ -108,7 +109,7 @@ The application uses PostgreSQL with the following core entities:
 ### January 2025 - Authentication System Overhaul & Profile Management
 - **OAuth Removal**: Completely removed Replit OAuth authentication system
 - **Username/Password Implementation**: Created traditional login/registration system
-- **German Language Interface**: All authentication pages now use German language
+- **English Language Interface**: All authentication pages now use English language
 - **Admin Approval Workflow**: New registrations create 'pending' users requiring admin activation
 - **User Management**: Enhanced admin interface with tabs for pending and active users
 - **Profile Page**: Complete user profile management with password changes and account deletion
@@ -131,6 +132,7 @@ The application uses PostgreSQL with the following core entities:
 - **Product Data Import**: Automated data import from Google Shopping using SerpAPI product details
 - **Enhanced Product Descriptions**: Google Shopping selection now fetches detailed API product descriptions when available
 - **Idealo.de Integration**: ChatGPT-powered product analysis from Idealo.de URLs with automatic categorization and realistic product data generation
+- **Complete UI Translation**: All user interface elements converted from German to English including forms, buttons, notifications, and error messages
 
 
 The application is designed to run efficiently on Replit's infrastructure with secure username/password authentication and admin-controlled user registration.

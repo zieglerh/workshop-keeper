@@ -229,14 +229,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const currentUser = await storage.getUser(req.user.id);
       if (currentUser?.role !== 'admin') {
-        return res.status(403).json({ message: "Admin-Zugriff erforderlich" });
+        return res.status(403).json({ message: "Admin access required" });
       }
       
       const pendingUsers = await storage.getPendingUsers();
       res.json(pendingUsers);
     } catch (error) {
       console.error("Error fetching pending users:", error);
-      res.status(500).json({ message: "Fehler beim Abrufen wartender Benutzer" });
+      res.status(500).json({ message: "Error fetching pending users" });
     }
   });
 
@@ -247,32 +247,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const currentUser = await storage.getUser(req.user.id);
       if (currentUser?.role !== 'admin') {
-        return res.status(403).json({ message: "Admin-Zugriff erforderlich" });
+        return res.status(403).json({ message: "Admin access required" });
       }
 
       const userToDelete = await storage.getUser(req.params.id);
       if (!userToDelete) {
-        return res.status(404).json({ message: "Benutzer nicht gefunden" });
+        return res.status(404).json({ message: "User not found" });
       }
 
       // Don't allow deleting the last admin
       if (userToDelete.role === 'admin') {
         const allAdmins = await storage.getUsersByRole('admin');
         if (allAdmins.length <= 1) {
-          return res.status(400).json({ message: "Der letzte Administrator kann nicht gelöscht werden" });
+          return res.status(400).json({ message: "The last administrator cannot be deleted" });
         }
       }
 
       // Don't allow deleting self
       if (req.params.id === currentUser?.id) {
-        return res.status(400).json({ message: "Sie können sich nicht selbst löschen" });
+        return res.status(400).json({ message: "You cannot delete yourself" });
       }
       
       await storage.deleteUser(req.params.id);
-      res.json({ message: "Benutzer erfolgreich gelöscht" });
+      res.json({ message: "User successfully deleted" });
     } catch (error) {
       console.error("Error deleting user:", error);
-      res.status(500).json({ message: "Fehler beim Löschen des Benutzers" });
+      res.status(500).json({ message: "Error deleting user" });
     }
   });
 

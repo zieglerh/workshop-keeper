@@ -38,16 +38,16 @@ export default function IdealoModal({ isOpen, onClose, onSelectProduct }: Idealo
       onSelectProduct(data);
       handleClose();
       toast({
-        title: "Produkt extrahiert",
-        description: `${data.name} wurde erfolgreich von Idealo.de extrahiert.`,
+        title: "Product extracted",
+        description: `${data.name} was successfully extracted from Idealo.de.`,
       });
     },
     onError: (error: Error) => {
       console.error('Idealo Extraction Error:', error);
       if (isUnauthorizedError(error)) {
         toast({
-          title: "Nicht autorisiert",
-          description: "Sie sind nicht angemeldet. Melden Sie sich erneut an...",
+          title: "Unauthorized",
+          description: "You are not logged in. Logging in again...",
           variant: "destructive",
         });
         setTimeout(() => {
@@ -56,8 +56,8 @@ export default function IdealoModal({ isOpen, onClose, onSelectProduct }: Idealo
         return;
       }
       toast({
-        title: "Extraktionsfehler",
-        description: `Fehler: ${error.message || 'Das Produkt konnte nicht von Idealo.de extrahiert werden.'}`,
+        title: "Extraction error",
+        description: `Error: ${error.message || 'The product could not be extracted from Idealo.de.'}`,
         variant: "destructive",
       });
     },
@@ -66,8 +66,8 @@ export default function IdealoModal({ isOpen, onClose, onSelectProduct }: Idealo
   const handleExtract = () => {
     if (!productUrl.trim()) {
       toast({
-        title: "URL erforderlich",
-        description: "Bitte geben Sie eine Idealo.de Produkt-URL ein.",
+        title: "URL required",
+        description: "Please enter an Idealo.de product URL.",
         variant: "destructive",
       });
       return;
@@ -75,8 +75,8 @@ export default function IdealoModal({ isOpen, onClose, onSelectProduct }: Idealo
 
     if (!productUrl.includes('idealo.de')) {
       toast({
-        title: "Ungültige URL",
-        description: "Die URL muss von idealo.de stammen.",
+        title: "Invalid URL",
+        description: "The URL must be from idealo.de.",
         variant: "destructive",
       });
       return;
@@ -96,13 +96,13 @@ export default function IdealoModal({ isOpen, onClose, onSelectProduct }: Idealo
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
             <LinkIcon className="h-5 w-5" />
-            <span>Idealo.de Produktextraktion</span>
+            <span>Idealo.de Product Extraction</span>
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
           <div>
-            <Label htmlFor="productUrl">Idealo.de Produkt-URL</Label>
+            <Label htmlFor="productUrl">Idealo.de Product URL</Label>
             <div className="flex space-x-2 mt-1">
               <Input
                 id="productUrl"
@@ -124,36 +124,36 @@ export default function IdealoModal({ isOpen, onClose, onSelectProduct }: Idealo
                 {extractMutation.isPending ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Extrahiere...
+                    Extracting...
                   </>
                 ) : (
                   <>
                     <LinkIcon className="mr-2 h-4 w-4" />
-                    Extrahieren
+                    Extract
                   </>
                 )}
               </Button>
             </div>
             <p className="text-xs text-gray-500 mt-1">
-              Fügen Sie eine Produkt-URL von idealo.de ein. ChatGPT analysiert die URL und 
-              erstellt automatisch passende Produktinformationen für Ihr Inventar.
+              Insert a product URL from idealo.de. ChatGPT analyzes the URL and 
+              automatically creates suitable product information for your inventory.
             </p>
           </div>
 
           <div className="bg-gray-50 p-4 rounded-lg">
-            <h4 className="font-medium mb-2">Unterstützte Kategorien:</h4>
+            <h4 className="font-medium mb-2">Supported Categories:</h4>
             <div className="grid grid-cols-2 gap-1 text-xs text-gray-600">
               <div>Tools - Cutting, Electrical, Fastening</div>
               <div>Equipment - Cleaning, Heavy, Lifting</div>
               <div>Material & Supply - Consumables, etc.</div>
-              <div>und weitere...</div>
+              <div>and more...</div>
             </div>
           </div>
         </div>
 
         <div className="flex justify-end space-x-2 pt-4 border-t">
           <Button variant="outline" onClick={handleClose}>
-            Abbrechen
+            Cancel
           </Button>
         </div>
       </DialogContent>

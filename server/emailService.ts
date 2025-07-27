@@ -44,35 +44,35 @@ export async function sendBorrowNotification(params: BorrowNotificationParams): 
     return false;
   }
 
-  const subject = `Workshop-Alert: Gegenstand ausgeliehen - ${itemName}`;
+  const subject = `Workshop Alert: Item Borrowed - ${itemName}`;
   
   const htmlContent = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-        <h2 style="color: #2563eb; margin: 0 0 10px 0;">🔧 Workshop Benachrichtigung</h2>
-        <p style="color: #6b7280; margin: 0;">Ein Gegenstand wurde aus dem Inventar ausgeliehen</p>
+        <h2 style="color: #2563eb; margin: 0 0 10px 0;">🔧 Workshop Notification</h2>
+        <p style="color: #6b7280; margin: 0;">An item has been borrowed from inventory</p>
       </div>
       
       <div style="background-color: white; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px;">
-        <h3 style="color: #374151; margin: 0 0 15px 0;">Ausleih-Details:</h3>
+        <h3 style="color: #374151; margin: 0 0 15px 0;">Borrowing Details:</h3>
         
         <table style="width: 100%; border-collapse: collapse;">
           <tr>
-            <td style="padding: 8px 0; font-weight: bold; color: #374151; width: 120px;">Gegenstand:</td>
+            <td style="padding: 8px 0; font-weight: bold; color: #374151; width: 120px;">Item:</td>
             <td style="padding: 8px 0; color: #6b7280;">${itemName}</td>
           </tr>
           <tr>
-            <td style="padding: 8px 0; font-weight: bold; color: #374151;">Ausgeliehen von:</td>
+            <td style="padding: 8px 0; font-weight: bold; color: #374151;">Borrowed by:</td>
             <td style="padding: 8px 0; color: #6b7280;">${borrowerName}</td>
           </tr>
           ${borrowerEmail ? `
           <tr>
-            <td style="padding: 8px 0; font-weight: bold; color: #374151;">E-Mail:</td>
+            <td style="padding: 8px 0; font-weight: bold; color: #374151;">Email:</td>
             <td style="padding: 8px 0; color: #6b7280;">${borrowerEmail}</td>
           </tr>
           ` : ''}
           <tr>
-            <td style="padding: 8px 0; font-weight: bold; color: #374151;">Datum:</td>
+            <td style="padding: 8px 0; font-weight: bold; color: #374151;">Date:</td>
             <td style="padding: 8px 0; color: #6b7280;">${borrowDate}</td>
           </tr>
         </table>
@@ -80,26 +80,26 @@ export async function sendBorrowNotification(params: BorrowNotificationParams): 
       
       <div style="margin-top: 20px; padding: 15px; background-color: #fef3c7; border-radius: 8px; border-left: 4px solid #f59e0b;">
         <p style="margin: 0; color: #92400e;">
-          <strong>Hinweis:</strong> Bitte überprüfen Sie die Verfügbarkeit des Gegenstands und verfolgen Sie die Rückgabe.
+          <strong>Note:</strong> Please check the availability of the item and track its return.
         </p>
       </div>
       
       <div style="margin-top: 20px; text-align: center; color: #9ca3af; font-size: 12px;">
-        <p>Diese Nachricht wurde automatisch vom Workshop-Inventarsystem gesendet.</p>
+        <p>This message was sent automatically by the Workshop Inventory System.</p>
       </div>
     </div>
   `;
 
   const textContent = `
-Workshop Benachrichtigung - Gegenstand ausgeliehen
+Workshop Notification - Item Borrowed
 
-Gegenstand: ${itemName}
-Ausgeliehen von: ${borrowerName}
-${borrowerEmail ? `E-Mail: ${borrowerEmail}\n` : ''}Datum: ${borrowDate}
+Item: ${itemName}
+Borrowed by: ${borrowerName}
+${borrowerEmail ? `Email: ${borrowerEmail}\n` : ''}Date: ${borrowDate}
 
-Bitte überprüfen Sie die Verfügbarkeit des Gegenstands und verfolgen Sie die Rückgabe.
+Please check the availability of the item and track its return.
 
-Diese Nachricht wurde automatisch vom Workshop-Inventarsystem gesendet.
+This message was sent automatically by the Workshop Inventory System.
   `;
 
   try {
@@ -140,43 +140,43 @@ export async function sendPurchaseNotification(params: PurchaseNotificationParam
     return false;
   }
 
-  const subject = `Workshop-Alert: Artikel gekauft - ${itemName}`;
+  const subject = `Workshop Alert: Item Purchased - ${itemName}`;
   
   const htmlContent = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <div style="background-color: #f0fdf4; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-        <h2 style="color: #16a34a; margin: 0 0 10px 0;">💰 Workshop Verkauf</h2>
-        <p style="color: #6b7280; margin: 0;">Ein Artikel wurde aus dem Inventar verkauft</p>
+        <h2 style="color: #16a34a; margin: 0 0 10px 0;">💰 Workshop Sale</h2>
+        <p style="color: #6b7280; margin: 0;">An item has been sold from inventory</p>
       </div>
       
       <div style="background-color: white; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px;">
-        <h3 style="color: #374151; margin: 0 0 15px 0;">Verkaufs-Details:</h3>
+        <h3 style="color: #374151; margin: 0 0 15px 0;">Sale Details:</h3>
         
         <table style="width: 100%; border-collapse: collapse;">
           <tr>
-            <td style="padding: 8px 0; font-weight: bold; color: #374151; width: 120px;">Artikel:</td>
+            <td style="padding: 8px 0; font-weight: bold; color: #374151; width: 120px;">Item:</td>
             <td style="padding: 8px 0; color: #6b7280;">${itemName}</td>
           </tr>
           <tr>
-            <td style="padding: 8px 0; font-weight: bold; color: #374151;">Käufer:</td>
+            <td style="padding: 8px 0; font-weight: bold; color: #374151;">Buyer:</td>
             <td style="padding: 8px 0; color: #6b7280;">${buyerName}</td>
           </tr>
           ${buyerEmail ? `
           <tr>
-            <td style="padding: 8px 0; font-weight: bold; color: #374151;">E-Mail:</td>
+            <td style="padding: 8px 0; font-weight: bold; color: #374151;">Email:</td>
             <td style="padding: 8px 0; color: #6b7280;">${buyerEmail}</td>
           </tr>
           ` : ''}
           <tr>
-            <td style="padding: 8px 0; font-weight: bold; color: #374151;">Menge:</td>
+            <td style="padding: 8px 0; font-weight: bold; color: #374151;">Quantity:</td>
             <td style="padding: 8px 0; color: #6b7280;">${quantity}</td>
           </tr>
           <tr>
-            <td style="padding: 8px 0; font-weight: bold; color: #374151;">Gesamtpreis:</td>
+            <td style="padding: 8px 0; font-weight: bold; color: #374151;">Total Price:</td>
             <td style="padding: 8px 0; color: #16a34a; font-weight: bold;">€${totalPrice.toFixed(2)}</td>
           </tr>
           <tr>
-            <td style="padding: 8px 0; font-weight: bold; color: #374151;">Datum:</td>
+            <td style="padding: 8px 0; font-weight: bold; color: #374151;">Date:</td>
             <td style="padding: 8px 0; color: #6b7280;">${purchaseDate}</td>
           </tr>
         </table>
@@ -184,7 +184,7 @@ export async function sendPurchaseNotification(params: PurchaseNotificationParam
       
       <div style="margin-top: 20px; padding: 15px; background-color: #fef3c7; border-radius: 8px; border-left: 4px solid #f59e0b;">
         <p style="margin: 0; color: #92400e;">
-          <strong>Hinweis:</strong> Bitte überprüfen Sie den Lagerbestand und aktualisieren Sie bei Bedarf die Verfügbarkeit.
+          <strong>Note:</strong> Please check the inventory and update availability if necessary.
         </p>
       </div>
       
@@ -195,17 +195,17 @@ export async function sendPurchaseNotification(params: PurchaseNotificationParam
   `;
 
   const textContent = `
-Workshop Benachrichtigung - Artikel verkauft
+Workshop Notification - Item Sold
 
-Artikel: ${itemName}
-Käufer: ${buyerName}
-${buyerEmail ? `E-Mail: ${buyerEmail}\n` : ''}Menge: ${quantity}
-Gesamtpreis: €${totalPrice.toFixed(2)}
-Datum: ${purchaseDate}
+Item: ${itemName}
+Buyer: ${buyerName}
+${buyerEmail ? `Email: ${buyerEmail}\n` : ''}Quantity: ${quantity}
+Total Price: €${totalPrice.toFixed(2)}
+Date: ${purchaseDate}
 
-Bitte überprüfen Sie den Lagerbestand und aktualisieren Sie bei Bedarf die Verfügbarkeit.
+Please check the inventory and update availability if necessary.
 
-Diese Nachricht wurde automatisch vom Workshop-Inventarsystem gesendet.
+This message was sent automatically by the Workshop Inventory System.
   `;
 
   try {
@@ -246,21 +246,21 @@ export async function sendUserRegistrationNotification(params: UserRegistrationN
   }
 
   const fullName = firstName && lastName ? `${firstName} ${lastName}` : '';
-  const subject = `Workshop-Alert: Neue Benutzerregistrierung - ${username}`;
+  const subject = `Workshop Alert: New User Registration - ${username}`;
   
   const htmlContent = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <div style="background-color: #eff6ff; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-        <h2 style="color: #2563eb; margin: 0 0 10px 0;">👤 Neue Benutzerregistrierung</h2>
-        <p style="color: #6b7280; margin: 0;">Ein neuer Benutzer hat sich registriert und wartet auf Freischaltung</p>
+        <h2 style="color: #2563eb; margin: 0 0 10px 0;">👤 New User Registration</h2>
+        <p style="color: #6b7280; margin: 0;">A new user has registered and is waiting for approval</p>
       </div>
       
       <div style="background-color: white; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px;">
-        <h3 style="color: #374151; margin: 0 0 15px 0;">Benutzer-Details:</h3>
+        <h3 style="color: #374151; margin: 0 0 15px 0;">User Details:</h3>
         
         <table style="width: 100%; border-collapse: collapse;">
           <tr>
-            <td style="padding: 8px 0; font-weight: bold; color: #374151; width: 120px;">Benutzername:</td>
+            <td style="padding: 8px 0; font-weight: bold; color: #374151; width: 120px;">Username:</td>
             <td style="padding: 8px 0; color: #6b7280;">${username}</td>
           </tr>
           ${fullName ? `
@@ -271,43 +271,43 @@ export async function sendUserRegistrationNotification(params: UserRegistrationN
           ` : ''}
           ${email ? `
           <tr>
-            <td style="padding: 8px 0; font-weight: bold; color: #374151;">E-Mail:</td>
+            <td style="padding: 8px 0; font-weight: bold; color: #374151;">Email:</td>
             <td style="padding: 8px 0; color: #6b7280;">${email}</td>
           </tr>
           ` : ''}
           <tr>
-            <td style="padding: 8px 0; font-weight: bold; color: #374151;">Registriert am:</td>
+            <td style="padding: 8px 0; font-weight: bold; color: #374151;">Registered on:</td>
             <td style="padding: 8px 0; color: #6b7280;">${registrationDate}</td>
           </tr>
           <tr>
             <td style="padding: 8px 0; font-weight: bold; color: #374151;">Status:</td>
-            <td style="padding: 8px 0; color: #f59e0b; font-weight: bold;">Wartet auf Freischaltung</td>
+            <td style="padding: 8px 0; color: #f59e0b; font-weight: bold;">Waiting for approval</td>
           </tr>
         </table>
       </div>
       
       <div style="margin-top: 20px; padding: 15px; background-color: #fef2f2; border-radius: 8px; border-left: 4px solid #ef4444;">
         <p style="margin: 0; color: #991b1b;">
-          <strong>Aktion erforderlich:</strong> Bitte loggen Sie sich in das Admin-Panel ein, um den neuen Benutzer zu überprüfen und freizuschalten.
+          <strong>Action required:</strong> Please log into the admin panel to review and activate the new user.
         </p>
       </div>
       
       <div style="margin-top: 20px; text-align: center; color: #9ca3af; font-size: 12px;">
-        <p>Diese Nachricht wurde automatisch vom Workshop-Inventarsystem gesendet.</p>
+        <p>This message was sent automatically by the Workshop Inventory System.</p>
       </div>
     </div>
   `;
 
   const textContent = `
-Workshop Benachrichtigung - Neue Benutzerregistrierung
+Workshop Notification - New User Registration
 
-Benutzername: ${username}
-${fullName ? `Name: ${fullName}\n` : ''}${email ? `E-Mail: ${email}\n` : ''}Registriert am: ${registrationDate}
-Status: Wartet auf Freischaltung
+Username: ${username}
+${fullName ? `Name: ${fullName}\n` : ''}${email ? `Email: ${email}\n` : ''}Registered on: ${registrationDate}
+Status: Waiting for approval
 
-Aktion erforderlich: Bitte loggen Sie sich in das Admin-Panel ein, um den neuen Benutzer zu überprüfen und freizuschalten.
+Action required: Please log into the admin panel to review and activate the new user.
 
-Diese Nachricht wurde automatisch vom Workshop-Inventarsystem gesendet.
+This message was sent automatically by the Workshop Inventory System.
   `;
 
   try {

@@ -46,14 +46,14 @@ export async function setupAuth(app: Express) {
     
     if (!username || !password) {
       console.log("Missing username or password");
-      return res.status(400).json({ message: "Benutzername und Passwort sind erforderlich" });
+      return res.status(400).json({ message: "Username and password are required" });
     }
 
     try {
       const user = await storage.getUserByUsername(username);
       if (!user) {
         console.log(`User not found: ${username}`);
-        return res.status(401).json({ message: "Ungültiger Benutzername oder Passwort" });
+        return res.status(401).json({ message: "Invalid username or password" });
       }
 
       console.log(`User found: ${user.id}, checking password...`);
@@ -63,13 +63,13 @@ export async function setupAuth(app: Express) {
       
       if (!isValidPassword) {
         console.log("Invalid password");
-        return res.status(401).json({ message: "Ungültiger Benutzername oder Passwort" });
+        return res.status(401).json({ message: "Invalid username or password" });
       }
 
       // Check if user is pending approval
       if (user.role === 'pending') {
         console.log(`User ${username} is pending approval`);
-        return res.status(403).json({ message: "Ihr Konto wartet noch auf Admin-Freischaltung" });
+        return res.status(403).json({ message: "Your account is still waiting for admin approval" });
       }
 
       // Set session
@@ -101,7 +101,7 @@ export async function setupAuth(app: Express) {
         message: error instanceof Error ? error.message : 'Unknown error',
         stack: error instanceof Error ? error.stack : undefined
       });
-      res.status(500).json({ message: "Anmeldung fehlgeschlagen" });
+      res.status(500).json({ message: "Login failed" });
     }
   });
 
@@ -110,7 +110,7 @@ export async function setupAuth(app: Express) {
     req.session.destroy((err) => {
       if (err) {
         console.error("Logout error:", err);
-        return res.status(500).json({ message: "Abmeldung fehlgeschlagen" });
+        return res.status(500).json({ message: "Logout failed" });
       }
       res.json({ success: true });
     });
@@ -122,13 +122,13 @@ export async function setupAuth(app: Express) {
       const { username, password, email, firstName, lastName, phone } = req.body;
       
       if (!username || !password) {
-        return res.status(400).json({ message: "Benutzername und Passwort sind erforderlich" });
+        return res.status(400).json({ message: "Username and password are required" });
       }
 
       // Check if user already exists
       const existingUser = await storage.getUserByUsername(username);
       if (existingUser) {
-        return res.status(409).json({ message: "Benutzername bereits vergeben" });
+        return res.status(409).json({ message: "Username already taken" });
       }
 
       // Hash password
