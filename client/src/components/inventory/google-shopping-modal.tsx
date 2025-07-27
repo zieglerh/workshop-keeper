@@ -40,8 +40,9 @@ export default function GoogleShoppingModal({ isOpen, onClose, onSelectItem }: G
       return await apiRequest("POST", "/api/search-google-shopping", { query });
     },
     onSuccess: (data: { results: GoogleShoppingItem[] }) => {
-      setSearchResults(data.results);
-      if (data.results.length === 0) {
+      console.log('Google Shopping API Response:', data);
+      setSearchResults(data.results || []);
+      if (!data.results || data.results.length === 0) {
         toast({
           title: "Keine Ergebnisse",
           description: "Keine Produkte für diese Suche gefunden. Versuchen Sie andere Suchbegriffe.",
@@ -55,6 +56,7 @@ export default function GoogleShoppingModal({ isOpen, onClose, onSelectItem }: G
       }
     },
     onError: (error: Error) => {
+      console.error('Google Shopping Search Error:', error);
       if (isUnauthorizedError(error)) {
         toast({
           title: "Nicht autorisiert",
@@ -68,7 +70,7 @@ export default function GoogleShoppingModal({ isOpen, onClose, onSelectItem }: G
       }
       toast({
         title: "Suchfehler",
-        description: "Die Google Shopping-Suche konnte nicht ausgeführt werden.",
+        description: `Fehler: ${error.message || 'Die Google Shopping-Suche konnte nicht ausgeführt werden.'}`,
         variant: "destructive",
       });
     },

@@ -27,9 +27,12 @@ export async function searchGoogleShopping(query: string): Promise<GoogleShoppin
       num: 10
     };
 
+    console.log('SerpAPI Search Params:', searchParams);
     const response = await getJson(searchParams);
+    console.log('SerpAPI Response:', JSON.stringify(response, null, 2));
     
     if (!response.shopping_results || !Array.isArray(response.shopping_results)) {
+      console.log('No shopping results found or invalid format');
       return [];
     }
 
@@ -46,6 +49,7 @@ export async function searchGoogleShopping(query: string): Promise<GoogleShoppin
 
   } catch (error) {
     console.error('Error searching Google Shopping:', error);
-    throw new Error('Failed to search Google Shopping');
+    console.error('Error details:', JSON.stringify(error, null, 2));
+    throw new Error(`SerpAPI Error: ${error.message || 'Failed to search Google Shopping'}`);
   }
 }
