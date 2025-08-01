@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS inventory_items (
   description TEXT,
   category_id VARCHAR NOT NULL REFERENCES categories(id),
   location VARCHAR NOT NULL,
-  purchase_date TIMESTAMP NOT NULL,
+  purchase_date TIMESTAMP,
   image_url TEXT,
   is_purchasable BOOLEAN NOT NULL DEFAULT false,
   price_per_unit DECIMAL(10,2),
@@ -77,21 +77,21 @@ CREATE TABLE IF NOT EXISTS purchases (
 
 -- Insert default admin user (password: admin123)
 -- Password hash for 'admin123' using bcrypt with rounds=10
-INSERT INTO users (id, username, password_hash, email, first_name, last_name, role, created_at, updated_at) 
+INSERT INTO users (id, username, password_hash, email, first_name, last_name, role, created_at, updated_at)
 VALUES (
-  'admin-default-user-id', 
-  'admin', 
-  '$2b$10$O5yQQ2jVnlKKPFnNrEBbvOK1mm.n5bSpy/x4P4.OdzE8DnGM/r/hO', 
-  'admin@intertwinet.de', 
-  'System', 
-  'Administrator', 
-  'admin', 
-  NOW(), 
+  'admin-default-user-id',
+  'admin',
+  '$2b$10$O5yQQ2jVnlKKPFnNrEBbvOK1mm.n5bSpy/x4P4.OdzE8DnGM/r/hO',
+  'admin@intertwinet.de',
+  'System',
+  'Administrator',
+  'admin',
+  NOW(),
   NOW()
 ) ON CONFLICT (username) DO NOTHING;
 
 -- Insert current categories from existing database
-INSERT INTO categories (id, name, description, color, created_at) VALUES 
+INSERT INTO categories (id, name, description, color, created_at) VALUES
   ('adb9dd46-dfb1-4f62-8001-72a4eae25d14', 'Equipment - Cleaning', 'Vacuum Cleaners, Air Blowers', '#9C27B0', '2025-07-26 09:06:46.015281'),
   ('4dd95fe7-d66a-4c43-9397-82212d56bb66', 'Equipment - Heavy', 'Welding Machines, CNC Machines', '#1976D2', '2025-07-26 09:05:26.583826'),
   ('2b27ddf4-5e1a-4985-a229-49de323a48c2', 'Equipment - Lifting', 'Hoists, Jacks, Cranes', '#FF9800', '2025-07-26 09:05:55.793764'),

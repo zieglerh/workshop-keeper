@@ -33,7 +33,7 @@ export async function extractIdealoProduct(productUrl: string): Promise<IdealoPr
 
     // Extract relevant data using OpenAI without web scraping
     const prompt = `
-Analyze this Idealo.de product URL and extract product information based on the URL structure and your knowledge of typical Idealo products.
+Analyze this Idealo.de product URL and extract product information based on the content and your knowledge of typical Idealo products.
 
 URL: ${productUrl}
 
@@ -41,10 +41,10 @@ Available categories from database:
 ${categoryList}
 
 Task:
-Based on the URL and product name in the URL, create realistic product information for a workshop inventory system.
+Based on the URL content and product name, extract realistic product information for a workshop inventory system.
 
 Extract/Create:
-- name: Product name (based on URL segments)
+- name: Product name
 - category: One of the available categories (exactly as listed above, best match)
 - description: Realistic product description (2-3 sentences)
 - image: Use URL from header
@@ -55,7 +55,7 @@ Example for "spax-screws":
 - name: "SPAX Universal Screws 4x60mm"
 - category: "Material & Supply - Consumables"
 - description: "High-quality SPAX universal screws with T-STAR plus drive. Ideal for wood connections and versatile fastening work."
-- image: https://cdn.idealo.com/folder/Product/5295/5/5295589/s1_produktbild_gross/spax-4x60-t-star-t20-500-st-191010400603.jpg
+- image: "https://cdn.idealo.com/folder/Product/5295/5/5295589/s1_produktbild_gross/spax-4x60-t-star-t20-500-st-191010400603.jpg"
 
 Respond only with valid JSON in this format:
 {
@@ -73,7 +73,7 @@ Respond only with valid JSON in this format:
       messages: [
         {
           role: "system",
-          content: "You are an expert for German tools and industrial products. Analyze Idealo.de URLs and create realistic product data for a workshop inventory system. Respond only with valid JSON."
+          content: "You are an expert for tools and industrial products. Analyze Idealo.de URLs and create realistic product data for a workshop inventory system. Respond only with valid JSON."
         },
         {
           role: "user",

@@ -173,10 +173,10 @@ export default function GoogleShoppingModal({ isOpen, onClose, onSelectItem }: G
                           <div className="flex-shrink-0">
                             <div className="w-20 h-20 border rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center">
                               {item.thumbnail ? (
-                                <img 
-                                  src={item.thumbnail} 
+                                <img
+                                  src={item.thumbnail}
                                   alt={item.title}
-                                  className="w-full h-full object-cover"
+                                  className="w-full h-full object-contain"
                                   onError={(e) => {
                                     const target = e.target as HTMLImageElement;
                                     target.style.display = 'none';
@@ -197,12 +197,12 @@ export default function GoogleShoppingModal({ isOpen, onClose, onSelectItem }: G
                             <h4 className="font-medium text-sm leading-tight mb-2 line-clamp-2">
                               {item.title}
                             </h4>
-                            
+
                             <div className="flex items-center space-x-4 mb-2">
                               <div className="font-semibold text-primary">
                                 {formatPrice(item.price)}
                               </div>
-                              
+
                               {item.rating && (
                                 <div className="flex items-center space-x-1">
                                   <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
@@ -218,7 +218,7 @@ export default function GoogleShoppingModal({ isOpen, onClose, onSelectItem }: G
                               <Badge variant="secondary" className="text-xs">
                                 {item.source}
                               </Badge>
-                              
+
                               {item.delivery && (
                                 <div className="flex items-center space-x-1 text-xs text-gray-500">
                                   <Truck className="h-3 w-3" />
@@ -236,7 +236,7 @@ export default function GoogleShoppingModal({ isOpen, onClose, onSelectItem }: G
                               >
                                 Auswählen
                               </Button>
-                              
+
                               {item.link && item.link.trim() !== '' ? (
                                 <Button
                                   variant="ghost"

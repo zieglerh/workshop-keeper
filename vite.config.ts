@@ -29,6 +29,20 @@ export default defineConfig({
     emptyOutDir: true,
   },
   server: {
+    port: 5173,
+    strictPort: true,
+    watch: {
+      usePolling: process.env.NODE_ENV === 'development', // ← wichtig für Docker (Inotify-Probleme vermeiden)
+    },
+    hmr: {
+      host: process.env.HMR_HOST || 'localhost', // ← damit der Browser den HMR-WS korrekt verbindet
+      port: 5173,
+      protocol: 'ws',
+      overlay: true
+    },
+    proxy: {
+      '/api': 'http://' + process.env.HMR_HOST + ':3000',
+    },
     fs: {
       strict: true,
       deny: ["**/.*"],

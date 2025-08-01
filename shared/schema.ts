@@ -70,9 +70,11 @@ export const inventoryItems = pgTable("inventory_items", {
   description: text("description"),
   categoryId: varchar("category_id").references(() => categories.id).notNull(),
   location: varchar("location").notNull(),
-  purchaseDate: timestamp("purchase_date").notNull(),
+  purchasePrice: decimal("purchase_price", { precision: 10, scale: 2 }),
+  purchaseDate: timestamp("purchase_date"),
   imageUrl: text("image_url"), // optional URL fallback
   imagePath: text("image_path"), // primary uploaded image path
+  externalLink: text("external_link"),
   isPurchasable: boolean("is_purchasable").notNull().default(false),
   pricePerUnit: decimal("price_per_unit", { precision: 10, scale: 2 }),
   stockQuantity: integer("stock_quantity").default(1),
@@ -175,11 +177,38 @@ export const insertInventoryItemSchema = createInsertSchema(inventoryItems).omit
   isAvailable: true,
   currentBorrowerId: true,
   borrowedAt: true,
+}).extend({
+  purchaseDate: z.preprocess(
+      (val) => {
+        if (val === null || val === undefined || val === '') return undefined;
+        if (typeof val === 'string') return new Date(val);
+        return val;
+      },
+      z.date().optional()
+  ),
+  purchasePrice: z.preprocess(
+      (val) => (typeof val === 'number' ? val.toFixed(2) : val),
+      z.string()
+  ),
+  pricePerUnit: z.preprocess(
+      (val) => (typeof val === 'number' ? val.toFixed(2) : val),
+      z.string()
+  )
+
 });
 
 export const insertPurchaseSchema = createInsertSchema(purchases).omit({
   id: true,
   purchasedAt: true,
+}).extend({
+  pricePerUnit: z.preprocess(
+      (val) => (typeof val === 'number' ? val.toFixed(2) : val),
+      z.string()
+  ),
+  totalPrice: z.preprocess(
+      (val) => (typeof val === 'number' ? val.toFixed(2) : val),
+      z.string()
+  ),
 });
 
 export const insertBorrowingHistorySchema = createInsertSchema(borrowingHistory).omit({

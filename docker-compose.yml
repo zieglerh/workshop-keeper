@@ -23,19 +23,34 @@
         context: .
         dockerfile: .docker/node/Dockerfile
       volumes:
-        - .:/app:delegated
+        - .:/app:delegate
         - /app/node_modules
-        - /app/dist
+      working_dir: /app
+      command: >
+        sh -c "npm run dev:server"
+#        sh -c "npm ci --include=dev &&
+#               npm cache clean --force &&
+#               npm run build &&
+#               npm run db:push &&
+#               npm start"
+      env_file: .env
       environment:
-        - NODE_ENV=production
+        - SHELL=/bin/sh
+        - NODE_ENV=development
         - DATABASE_URL=postgres://postgres:postgres@db:5432/workshop
         - REPLIT_DOMAINS=workshop-keeper.workshop-keeper.orb.local,localhost:5000,127.0.0.1:5000
         - SESSION_SECRET=144fd7c6a8dfc658587ae88030f206c15168dbd7d3a7ed3d5ba663e4dcc5db61
         - REPL_ID=WorkshopKeeper
         - ISSUER_URL=https://replit.com/oidc
+        - OPENAI_API_KEY
+        - SERPAPI_API_KEY
+        - HMR_HOST
       depends_on:
         - db
-    #    restart: unless-stopped
+      ports:
+        - "5173:5173"   # Vite
+        - "3000:3000"   # Express
+      restart: on-failure
 
   volumes:
     postgres_data:

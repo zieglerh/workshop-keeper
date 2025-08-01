@@ -15,22 +15,14 @@ COPY . .
 # Build the application
 RUN npm run build
 
-ENV DATABASE_URL=postgres://postgres:postgres@db:5432/workshop
-RUN npm run db:push
-
 # Production stage
 FROM node:20-alpine AS production
 
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
-
-# Install only production dependencies
-RUN npm ci && npm cache clean --force
-
 # Copy built application
 COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs
@@ -49,4 +41,4 @@ EXPOSE 5000
 
 # Start the application
 #CMD ["node", "dist/index.js"]
-CMD ["npm", "start"]
+CMD ["npm", "run", "dev:server"]

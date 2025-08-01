@@ -165,7 +165,7 @@ export class DatabaseStorage implements IStorage {
   async updateUserProfile(id: string, profile: Partial<User>): Promise<User> {
     const [user] = await db
       .update(users)
-      .set({ 
+      .set({
         firstName: profile.firstName,
         lastName: profile.lastName,
         email: profile.email,
@@ -181,10 +181,10 @@ export class DatabaseStorage implements IStorage {
   async updateUserPassword(id: string, password: string): Promise<void> {
     const bcrypt = await import('bcrypt');
     const passwordHash = await bcrypt.hash(password, 10);
-    
+
     await db
       .update(users)
-      .set({ 
+      .set({
         passwordHash,
         updatedAt: new Date()
       })
@@ -228,8 +228,8 @@ export class DatabaseStorage implements IStorage {
       .from(inventoryItems)
       .leftJoin(categories, eq(inventoryItems.categoryId, categories.id))
       .leftJoin(users, eq(inventoryItems.currentBorrowerId, users.id))
-      .orderBy(desc(inventoryItems.createdAt))
-      .then(rows => 
+      .orderBy(desc(inventoryItems.purchaseDate))
+      .then(rows =>
         rows.map(row => ({
           ...row.inventory_items,
           category: row.categories!,
@@ -249,6 +249,7 @@ export class DatabaseStorage implements IStorage {
     if (result.length === 0) return undefined;
 
     const row = result[0];
+    console.log('row:', row);
     return {
       ...row.inventory_items,
       category: row.categories!,
@@ -366,6 +367,7 @@ export class DatabaseStorage implements IStorage {
 
   // Purchase operations
   async purchaseItem(purchase: InsertPurchase): Promise<Purchase> {
+    console.log('purchases:', purchase);
     return await db.transaction(async (tx) => {
       // Create purchase record
       const [newPurchase] = await tx

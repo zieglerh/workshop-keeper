@@ -37,6 +37,7 @@ export default function Borrowing() {
     retry: false,
     enabled: isAuthenticated,
     onError: (error: Error) => {
+      console.error("Borrowing History error", error)
       if (isUnauthorizedError(error)) {
         toast({
           title: "Unauthorized",
@@ -95,11 +96,11 @@ export default function Borrowing() {
     <div className="min-h-screen flex bg-background">
       <Sidebar />
       <main className="flex-1 lg:ml-0">
-        <Header 
+        <Header
           title="Borrowing Management"
           subtitle="Track borrowed items and borrowing history."
         />
-        
+
         <div className="p-6 space-y-6">
           {/* Active Borrowings */}
           <Card>

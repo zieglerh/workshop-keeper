@@ -62,7 +62,9 @@ export async function setupVite(app: Express, server: Server) {
       res.status(200).set({ "Content-Type": "text/html" }).end(page);
     } catch (e) {
       vite.ssrFixStacktrace(e as Error);
-      next(e);
+      // next(e);
+      console.error('[vite-render-error]', e);
+      res.status(500).end('Internal Error');
     }
   });
 }

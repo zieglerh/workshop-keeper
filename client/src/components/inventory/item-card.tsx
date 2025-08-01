@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ShoppingCart, HandIcon, RotateCcw, Edit, Trash2, ImageIcon } from "lucide-react";
+import { ShoppingCart, HandIcon, RotateCcw, Edit, Trash2, ImageIcon, ExternalLink } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -91,8 +91,8 @@ export default function ItemCard({ item, userRole, onPurchaseSuccess, onBorrowSu
       return await apiRequest("POST", `/api/purchases`, {
         itemId: item.id,
         quantity: purchaseQuantity,
-        pricePerUnit: item.price || 0,
-        totalPrice: (item.price || 0) * purchaseQuantity,
+        pricePerUnit: item.pricePerUnit || 0,
+        totalPrice: (item.pricePerUnit || 0) * purchaseQuantity,
       });
     },
     onSuccess: (data: any) => {
@@ -177,39 +177,39 @@ export default function ItemCard({ item, userRole, onPurchaseSuccess, onBorrowSu
     <>
       <Card className="bg-surface rounded-xl shadow-material overflow-hidden hover:shadow-material-lg transition-shadow">
         {item.imageUrl ? (
-          <img 
-            src={item.imageUrl} 
+          <img
+            src={item.imageUrl}
             alt={item.name}
-            className="w-full h-48 object-cover"
+            className="w-full h-48 object-contain p-3"
           />
         ) : (
           <div className="w-full h-48 bg-gray-200 flex items-center justify-center">
             <ImageIcon className="h-12 w-12 text-gray-400" />
           </div>
         )}
-        
+
         <CardContent className="p-4">
           <div className="flex items-start justify-between mb-2">
             <h3 className="font-semibold text-gray-900 truncate flex-1">{item.name}</h3>
-            <Badge 
+            <Badge
               variant={item.isAvailable ? "secondary" : "secondary"}
               className={
-                item.isAvailable 
-                  ? "bg-success/10 text-success ml-2" 
+                item.isAvailable
+                  ? "bg-success/10 text-success ml-2"
                   : "bg-warning/10 text-warning ml-2"
               }
             >
               {item.isAvailable ? "Available" : "Borrowed"}
             </Badge>
           </div>
-          
+
           <div className="flex flex-wrap gap-1 mb-3">
-            <Badge 
-              variant="secondary" 
+            <Badge
+              variant="secondary"
               className="text-xs"
-              style={{ 
+              style={{
                 backgroundColor: `${item.category.color}15`,
-                color: item.category.color 
+                color: item.category.color
               }}
             >
               {item.category.name}
@@ -220,8 +220,18 @@ export default function ItemCard({ item, userRole, onPurchaseSuccess, onBorrowSu
               </Badge>
             )}
           </div>
-          
+
           <div className="space-y-2 text-sm text-gray-600 mb-4">
+              <div className="flex justify-between">
+                <span>Price:</span>
+                <span className="font-semibold text-gray-900">
+                {item.purchasePrice && (
+                    <span>
+                        €{parseFloat(item.purchasePrice || '0').toFixed(2)}
+                    </span>
+                )}
+                </span>
+              </div>
             <div className="flex justify-between">
               <span>Location:</span>
               <span className="truncate ml-2">{item.location}</span>
@@ -229,7 +239,7 @@ export default function ItemCard({ item, userRole, onPurchaseSuccess, onBorrowSu
             {item.isAvailable ? (
               <div className="flex justify-between">
                 <span>Purchased:</span>
-                <span>{format(new Date(item.purchaseDate), 'PP')}</span>
+                <span>{item.purchaseDate ? format(new Date(item.purchaseDate), 'PP') : ''}</span>
               </div>
             ) : (
               <div className="flex justify-between">
@@ -241,12 +251,12 @@ export default function ItemCard({ item, userRole, onPurchaseSuccess, onBorrowSu
             )}
             {item.isPurchasable && (
               <>
-                <div className="flex justify-between">
-                  <span>Price:</span>
-                  <span className="font-semibold text-gray-900">
-                    €{parseFloat(item.pricePerUnit || '0').toFixed(2)}
-                  </span>
-                </div>
+                {/*<div className="flex justify-between">*/}
+                {/*  <span>Price:</span>*/}
+                {/*  <span className="font-semibold text-gray-900">*/}
+                {/*    €{parseFloat(item.pricePerUnit || '0').toFixed(2)}*/}
+                {/*  </span>*/}
+                {/*</div>*/}
                 <div className="flex justify-between">
                   <span>Stock:</span>
                   <span>{item.stockQuantity || 0} units</span>
@@ -254,7 +264,7 @@ export default function ItemCard({ item, userRole, onPurchaseSuccess, onBorrowSu
               </>
             )}
           </div>
-          
+
           <div className="flex space-x-2">
             {item.isPurchasable && item.stockQuantity && item.stockQuantity > 0 ? (
               <div className="flex-1 flex space-x-1">
@@ -298,7 +308,16 @@ export default function ItemCard({ item, userRole, onPurchaseSuccess, onBorrowSu
                 <span>Return</span>
               </Button>
             )}
-            
+            {item.externalLink && (
+              <a
+                  href={item.externalLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center rounded-md border border-input bg-background p-2 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 h-9 w-9"
+              >
+                <ExternalLink className="h-4 w-4" />
+              </a>
+            )}
             {userRole === 'admin' && (
               <>
                 <Button

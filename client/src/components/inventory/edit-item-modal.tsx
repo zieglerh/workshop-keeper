@@ -15,6 +15,7 @@ import { isUnauthorizedError } from "@/lib/authUtils";
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import type { InventoryItemWithRelations, Category } from "@shared/schema";
+import PurchaseInfoFields from "@/components/inventory/purchase-info-fields.tsx";
 
 interface EditItemModalProps {
   isOpen: boolean;
@@ -24,7 +25,6 @@ interface EditItemModalProps {
 
 export default function EditItemModal({ isOpen, onClose, item }: EditItemModalProps) {
   const { toast } = useToast();
-  const [isPurchasable, setIsPurchasable] = useState(item.isPurchasable);
 
   const { data: categories = [] } = useQuery({
     queryKey: ["/api/categories"],
@@ -40,8 +40,10 @@ export default function EditItemModal({ isOpen, onClose, item }: EditItemModalPr
       location: item.location,
       purchaseDate: item.purchaseDate,
       imageUrl: item.imageUrl || "",
-      isPurchasable: item.isPurchasable,
-      pricePerUnit: item.pricePerUnit || "0",
+      externalLink: item.externalLink || "",
+      isPurchasable: item.isPurchasable || false,
+      purchasePrice: item.purchasePrice || 0,
+      pricePerUnit: item.pricePerUnit || 0,
       stockQuantity: item.stockQuantity || 1,
     },
   });
@@ -53,15 +55,23 @@ export default function EditItemModal({ isOpen, onClose, item }: EditItemModalPr
         description: item.description || "",
         categoryId: item.categoryId,
         location: item.location,
-        purchaseDate: item.purchaseDate,
+        purchaseDate: item.purchaseDate
+            ? format(new Date(item.purchaseDate), 'yyyy-MM-dd')
+            : item.purchaseDate,
         imageUrl: item.imageUrl || "",
-        isPurchasable: item.isPurchasable,
-        pricePerUnit: item.pricePerUnit || "0",
+        externalLink: item.externalLink || "",
+        isPurchasable: item.isPurchasable || false,
+        purchasePrice: item.purchasePrice || 0,
+        pricePerUnit: item.pricePerUnit || 0,
         stockQuantity: item.stockQuantity || 1,
       });
-      setIsPurchasable(item.isPurchasable);
     }
   }, [isOpen, item, form]);
+
+  const handleExternalLinkChange = (externalLink: string) => {
+    const cleanUrl = externalLink.split('?')[0];
+    form.setValue("externalLink", cleanUrl);
+  };
 
   const updateMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -97,12 +107,12 @@ export default function EditItemModal({ isOpen, onClose, item }: EditItemModalPr
   });
 
   const onSubmit = (data: any) => {
+    console.log("on submit", data);
     const formattedData = {
       ...data,
-      isPurchasable,
-      pricePerUnit: isPurchasable ? data.pricePerUnit : null,
-      stockQuantity: isPurchasable ? data.stockQuantity : 1,
+      purchaseDate: data.purchaseDate ?? null,
     };
+    console.log("on submit", formattedData);
     updateMutation.mutate(formattedData);
   };
 
@@ -112,7 +122,7 @@ export default function EditItemModal({ isOpen, onClose, item }: EditItemModalPr
         <DialogHeader>
           <DialogTitle>Edit Item</DialogTitle>
         </DialogHeader>
-        
+
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -129,11 +139,11 @@ export default function EditItemModal({ isOpen, onClose, item }: EditItemModalPr
                 </p>
               )}
             </div>
-            
+
             <div>
               <Label htmlFor="categoryId">Category</Label>
-              <Select 
-                value={form.watch("categoryId")} 
+              <Select
+                value={form.watch("categoryId")}
                 onValueChange={(value) => form.setValue("categoryId", value)}
               >
                 <SelectTrigger className="mt-1">
@@ -142,7 +152,7 @@ export default function EditItemModal({ isOpen, onClose, item }: EditItemModalPr
                 <SelectContent>
                   {categories.map((category: Category) => (
                     <SelectItem key={category.id} value={category.id}>
-                      {category.name}
+                      {category.name} ({category.description})
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -181,16 +191,13 @@ export default function EditItemModal({ isOpen, onClose, item }: EditItemModalPr
                 </p>
               )}
             </div>
-            
+
             <div>
               <Label htmlFor="purchaseDate">Purchase Date</Label>
               <Input
                 id="purchaseDate"
                 type="date"
-                {...form.register("purchaseDate", {
-                  setValueAs: (value) => new Date(value),
-                })}
-                defaultValue={format(new Date(item.purchaseDate), 'yyyy-MM-dd')}
+                {...form.register("purchaseDate")}
                 className="mt-1"
               />
               {form.formState.errors.purchaseDate && (
@@ -211,47 +218,25 @@ export default function EditItemModal({ isOpen, onClose, item }: EditItemModalPr
             />
           </div>
 
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="purchasable"
-              checked={isPurchasable}
-              onCheckedChange={setIsPurchasable}
+          <div>
+            <Label htmlFor="externalLink">Product URL</Label>
+            <Input
+                id="externalLink"
+                {...form.register("externalLink")}
+                placeholder="https://amazon.de/product/1234567890"
+                onChange={(e) => handleExternalLinkChange(e.target.value)}
+                className="mt-1"
             />
-            <Label htmlFor="purchasable" className="text-sm">
-              Mark as purchasable item
-            </Label>
+            {form.formState.errors.externalLink && (
+                <p className="text-sm text-red-600 mt-1">
+                  {form.formState.errors.externalLink.message}
+                </p>
+            )}
           </div>
 
-          {isPurchasable && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-gray-50 rounded-lg">
-              <div>
-                <Label htmlFor="pricePerUnit">Price per Unit (€)</Label>
-                <Input
-                  id="pricePerUnit"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  {...form.register("pricePerUnit")}
-                  placeholder="0.00"
-                  className="mt-1"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="stockQuantity">Stock Quantity</Label>
-                <Input
-                  id="stockQuantity"
-                  type="number"
-                  min="0"
-                  {...form.register("stockQuantity", {
-                    setValueAs: (value) => parseInt(value) || 0,
-                  })}
-                  placeholder="0"
-                  className="mt-1"
-                />
-              </div>
-            </div>
-          )}
+          <PurchaseInfoFields
+              form={form}
+          />
 
           {!item.isAvailable && (
             <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">

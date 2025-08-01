@@ -44,11 +44,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error("Session destruction error:", err);
         return res.status(500).json({ message: "Logout failed" });
       }
-      
+
       res.clearCookie('connect.sid'); // Clear session cookie
-      res.json({ 
+      res.json({
         success: true,
-        message: "Erfolgreich abgemeldet" 
+        message: "Erfolgreich abgemeldet"
       });
     });
   });
@@ -57,7 +57,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/users/:id/upload-image', isAuthenticated, upload.single('image'), async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.id);
-      
+
       // Users can upload their own image, admins can upload for anyone
       if (req.params.id !== req.user.id && currentUser?.role !== 'admin') {
         return res.status(403).json({ message: "Permission denied" });
@@ -68,7 +68,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const imagePath = req.file.path;
-      
+
       // Get current user to delete old image
       const userToUpdate = await storage.getUser(req.params.id);
       if (userToUpdate?.profileImagePath) {
@@ -80,8 +80,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         profileImagePath: imagePath,
       });
 
-      res.json({ 
-        success: true, 
+      res.json({
+        success: true,
         imagePath,
         user: updatedUser
       });
@@ -98,7 +98,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (currentUser?.role !== 'admin') {
         return res.status(403).json({ message: "Admin access required" });
       }
-      
+
       const users = await storage.getAllUsers();
       res.json(users);
     } catch (error) {
@@ -136,7 +136,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { firstName, lastName, email, username } = req.body;
-      
+
       // Check if username is already taken (if username is being changed)
       if (username) {
         const existingUser = await storage.getUserByUsername(username);
@@ -188,7 +188,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { username, firstName, lastName, email, phone, password, role } = req.body;
-      
+
       if (!username || !password) {
         return res.status(400).json({ message: "Username and password are required" });
       }
@@ -231,7 +231,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (currentUser?.role !== 'admin') {
         return res.status(403).json({ message: "Admin access required" });
       }
-      
+
       const pendingUsers = await storage.getPendingUsers();
       res.json(pendingUsers);
     } catch (error) {
@@ -267,7 +267,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (req.params.id === currentUser?.id) {
         return res.status(400).json({ message: "You cannot delete yourself" });
       }
-      
+
       await storage.deleteUser(req.params.id);
       res.json({ message: "User successfully deleted" });
     } catch (error) {
@@ -298,10 +298,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const category = await storage.createCategory(categoryData);
       res.json(category);
     } catch (error) {
+      console.error("Error creating category:", error);
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid category data", errors: error.errors });
       }
-      console.error("Error creating category:", error);
       res.status(500).json({ message: "Failed to create category" });
     }
   });
@@ -317,10 +317,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const category = await storage.updateCategory(req.params.id, categoryData);
       res.json(category);
     } catch (error) {
+      console.error("Error updating category:", error);
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid category data", errors: error.errors });
       }
-      console.error("Error updating category:", error);
       res.status(500).json({ message: "Failed to update category" });
     }
   });
@@ -359,16 +359,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('Downloading image from URL:', imageUrl);
       const result = await downloadImageFromUrl(imageUrl);
-      
+
       if (result.success) {
-        res.json({ 
-          success: true, 
+        res.json({
+          success: true,
           localPath: result.localPath,
           message: "Image downloaded successfully"
         });
       } else {
-        res.status(400).json({ 
-          success: false, 
+        res.status(400).json({
+          success: false,
           error: result.error || "Failed to download image"
         });
       }
@@ -393,7 +393,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { searchGoogleShopping } = await import('./googleShopping');
       const results = await searchGoogleShopping(query);
-      
+
       console.log('Sending results to frontend:', { results });
       res.json({ results });
     } catch (error) {
@@ -417,7 +417,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { getProductDetails } = await import('./googleShopping');
       const details = await getProductDetails(productId);
-      
+
       console.log('Sending product details to frontend:', details);
       res.json(details);
     } catch (error) {
@@ -445,11 +445,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { extractIdealoProduct } = await import('./idealoExtractor');
       const result = await extractIdealoProduct(productUrl);
-      
+
       res.json(result);
     } catch (error) {
       console.error("Error extracting Idealo product:", error);
       res.status(500).json({ message: error.message || "Failed to extract product from Idealo" });
+    }
+  });
+
+  // Amazon Product Extraction route
+  app.post("/api/extract-amazon-product", isAuthenticated, async (req: Request & { user: any }, res: Response) => {
+    try {
+      const currentUser = await storage.getUser(req.user.id);
+      if (currentUser?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { productUrl } = req.body;
+      if (!productUrl) {
+        return res.status(400).json({ message: "Product URL is required" });
+      }
+
+      if (!productUrl.includes('amazon.')) {
+        return res.status(400).json({ message: "URL must be from amazon" });
+      }
+
+      const { extractAmazonProduct } = await import('./amazonExtractor');
+      const result = await extractAmazonProduct(productUrl);
+
+      res.json(result);
+    } catch (error) {
+      console.error("Error extracting Amazon product:", error);
+      res.status(500).json({ message: error.message || "Failed to extract product from Amazon" });
     }
   });
 
@@ -488,10 +515,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const item = await storage.createInventoryItem(itemData);
       res.json(item);
     } catch (error) {
+      console.error("Error creating inventory item:", error);
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid item data", errors: error.errors });
       }
-      console.error("Error creating inventory item:", error);
       res.status(500).json({ message: "Failed to create inventory item" });
     }
   });
@@ -507,10 +534,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const item = await storage.updateInventoryItem(req.params.id, itemData);
       res.json(item);
     } catch (error) {
+      console.error("Error updating inventory item:", error);
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid item data", errors: error.errors });
       }
-      console.error("Error updating inventory item:", error);
       res.status(500).json({ message: "Failed to update inventory item" });
     }
   });
@@ -530,34 +557,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/borrowing-history", isAuthenticated, async (req: any, res) => {
+    try {
+      // Get notification template for borrowing
+      const template = await storage.getNotificationTemplateByType('borrow');
+
+      res.json({
+        success: true,
+        notification: template || null
+      });
+    } catch (error) {
+      console.error("Error borrowing history:", error);
+      res.status(500).json({ message: "Failed to get borrowing history" });
+    }
+  });
+
   // Borrowing routes
   app.post("/api/inventory/:id/borrow", isAuthenticated, async (req: any, res) => {
     try {
       // Get item and user details for email notification
       const item = await storage.getInventoryItem(req.params.id);
       const borrower = await storage.getUser(req.user.id);
-      
+
       if (!item) {
         return res.status(404).json({ message: "Item not found" });
       }
-      
+
       if (!item.isAvailable) {
         return res.status(400).json({ message: "Item is not available for borrowing" });
       }
 
       // Borrow the item
       await storage.borrowItem(req.params.id, req.user.id);
-      
+
       // Send email notification to all admins
       try {
         const allAdmins = await storage.getUsersByRole('admin');
         const adminEmails = allAdmins
           .map(admin => admin.email)
           .filter(email => email !== null && email !== '') as string[];
-        
+
         if (adminEmails.length > 0) {
-          const borrowerName = borrower ? 
-            (borrower.firstName && borrower.lastName 
+          const borrowerName = borrower ?
+            (borrower.firstName && borrower.lastName
               ? `${borrower.firstName} ${borrower.lastName}`
               : borrower.username || borrower.email || 'Unknown User')
             : 'Unknown User';
@@ -580,11 +622,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error("Error sending borrow notification email:", emailError);
         // Don't fail the borrowing process if email fails
       }
-      
+
       // Get notification template for borrowing
       const template = await storage.getNotificationTemplateByType('borrow');
-      
-      res.json({ 
+
+      res.json({
         success: true,
         notification: template || null
       });
@@ -622,7 +664,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const imagePath = req.file.path;
-      
+
       // Get current item to delete old image
       const itemToUpdate = await storage.getInventoryItem(req.params.id);
       if (itemToUpdate?.imagePath) {
@@ -634,8 +676,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         imagePath,
       });
 
-      res.json({ 
-        success: true, 
+      res.json({
+        success: true,
         imagePath,
         item: updatedItem
       });
@@ -649,13 +691,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const currentUser = await storage.getUser(req.user.id);
       let history;
-      
+
       if (currentUser?.role === 'admin') {
         history = await storage.getBorrowingHistory();
       } else {
         history = await storage.getUserBorrowingHistory(req.user.id);
       }
-      
+
       res.json(history);
     } catch (error) {
       console.error("Error fetching borrowing history:", error);
@@ -666,31 +708,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Purchase routes
   app.post("/api/purchases", isAuthenticated, async (req: any, res) => {
     try {
+      console.log("purchase data", {
+        ...req.body,
+        userId: req.user.id,
+      });
       const purchaseData = insertPurchaseSchema.parse({
         ...req.body,
         userId: req.user.id,
       });
-      
+      console.log('purchaseData', purchaseData);
+
       // Get item and buyer details for email notification
       const item = await storage.getInventoryItem(purchaseData.itemId);
       const buyer = await storage.getUser(req.user.id);
-      
+
       if (!item) {
         return res.status(404).json({ message: "Item not found" });
       }
 
       const purchase = await storage.purchaseItem(purchaseData);
-      
+      console.log('purchase', purchase);
+
       // Send email notification to all admins
       try {
         const allAdmins = await storage.getUsersByRole('admin');
         const adminEmails = allAdmins
           .map(admin => admin.email)
           .filter(email => email !== null && email !== '') as string[];
-        
+
         if (adminEmails.length > 0) {
-          const buyerName = buyer ? 
-            (buyer.firstName && buyer.lastName 
+          const buyerName = buyer ?
+            (buyer.firstName && buyer.lastName
               ? `${buyer.firstName} ${buyer.lastName}`
               : buyer.username || buyer.email || 'Unknown User')
             : 'Unknown User';
@@ -715,19 +763,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error("Error sending purchase notification email:", emailError);
         // Don't fail the purchase process if email fails
       }
-      
+
       // Get notification template for purchase
       const template = await storage.getNotificationTemplateByType('purchase');
-      
+
       res.json({
         ...purchase,
         notification: template || null
       });
     } catch (error) {
+      console.error("Error creating purchase:", error);
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid purchase data", errors: error.errors });
       }
-      console.error("Error creating purchase:", error);
       res.status(500).json({ message: "Failed to create purchase" });
     }
   });
@@ -736,13 +784,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const currentUser = await storage.getUser(req.user.id);
       let purchases;
-      
+
       if (currentUser?.role === 'admin') {
         purchases = await storage.getAllPurchases();
       } else {
         purchases = await storage.getUserPurchases(req.user.id);
       }
-      
+
       res.json(purchases);
     } catch (error) {
       console.error("Error fetching purchases:", error);
@@ -783,8 +831,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         adminEmails: currentUser.email ? [currentUser.email] : []
       });
 
-      res.json({ 
-        success, 
+      res.json({
+        success,
         message: success ? "Test borrow email sent successfully" : "Failed to send test borrow email",
         email: currentUser.email
       });
@@ -817,8 +865,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         adminEmails: currentUser.email ? [currentUser.email] : []
       });
 
-      res.json({ 
-        success, 
+      res.json({
+        success,
         message: success ? "Test purchase email sent successfully" : "Failed to send test purchase email",
         email: currentUser.email
       });
@@ -850,8 +898,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         adminEmails: currentUser.email ? [currentUser.email] : []
       });
 
-      res.json({ 
-        success, 
+      res.json({
+        success,
         message: success ? "Test registration email sent successfully" : "Failed to send test registration email",
         email: currentUser.email
       });
@@ -863,8 +911,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Health check endpoint for Docker
   app.get("/api/health", (req, res) => {
-    res.status(200).json({ 
-      status: "healthy", 
+    res.status(200).json({
+      status: "healthy",
       timestamp: new Date().toISOString(),
       version: process.env.npm_package_version || "1.0.0"
     });

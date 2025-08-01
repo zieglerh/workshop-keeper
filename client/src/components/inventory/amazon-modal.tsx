@@ -9,13 +9,13 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import { isUnauthorizedError } from "@/lib/authUtils";
 
-interface IdealoModalProps {
+interface AmazonModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSelectProduct: (product: any) => void;
 }
 
-interface IdealoProduct {
+interface AmazonProduct {
   name: string;
   category: string;
   description: string;
@@ -25,27 +25,27 @@ interface IdealoProduct {
   url: string;
 }
 
-export default function IdealoModal({ isOpen, onClose, onSelectProduct }: IdealoModalProps) {
+export default function AmazonModal({ isOpen, onClose, onSelectProduct }: AmazonModalProps) {
   const { toast } = useToast();
   const [productUrl, setProductUrl] = useState("");
 
   const extractMutation = useMutation({
-    mutationFn: async (url: string): Promise<IdealoProduct> => {
-      const response = await apiRequest("POST", "/api/extract-idealo-product", { productUrl: url });
+    mutationFn: async (url: string): Promise<AmazonProduct & { url: string }> => {
+      const response = await apiRequest("POST", "/api/extract-amazon-product", { productUrl: url });
       const data = await response.json();
       return { ...data, url: url };
     },
-    onSuccess: (data: IdealoProduct) => {
-      console.log('Idealo Product Extracted:', data);
+    onSuccess: (data: AmazonProduct) => {
+      console.log('Amazon Product Extracted:', data);
       onSelectProduct(data);
       handleClose();
       toast({
         title: "Product extracted",
-        description: `${data.name} was successfully extracted from Idealo.de.`,
+        description: `${data.name} was successfully extracted from Amazon.de.`,
       });
     },
     onError: (error: Error) => {
-      console.error('Idealo Extraction Error:', error);
+      console.error('Amazon Extraction Error:', error);
       if (isUnauthorizedError(error)) {
         toast({
           title: "Unauthorized",
@@ -59,7 +59,7 @@ export default function IdealoModal({ isOpen, onClose, onSelectProduct }: Idealo
       }
       toast({
         title: "Extraction error",
-        description: `Error: ${error.message || 'The product could not be extracted from Idealo.de.'}`,
+        description: `Error: ${error.message || 'The product could not be extracted from Amazon.de.'}`,
         variant: "destructive",
       });
     },
@@ -69,16 +69,16 @@ export default function IdealoModal({ isOpen, onClose, onSelectProduct }: Idealo
     if (!productUrl.trim()) {
       toast({
         title: "URL required",
-        description: "Please enter an Idealo.de product URL.",
+        description: "Please enter an Amazon.de product URL.",
         variant: "destructive",
       });
       return;
     }
 
-    if (!productUrl.includes('idealo.de')) {
+    if (!productUrl.includes('amazon.')) {
       toast({
         title: "Invalid URL",
-        description: "The URL must be from idealo.de.",
+        description: "The URL must be from amazon.de.",
         variant: "destructive",
       });
       return;
@@ -98,19 +98,19 @@ export default function IdealoModal({ isOpen, onClose, onSelectProduct }: Idealo
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
             <LinkIcon className="h-5 w-5" />
-            <span>Idealo.de Product Extraction</span>
+            <span>Amazon.de Product Extraction</span>
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
           <div>
-            <Label htmlFor="productUrl">Idealo.de Product URL</Label>
+            <Label htmlFor="productUrl">Amazon.de Product URL</Label>
             <div className="flex space-x-2 mt-1">
               <Input
                 id="productUrl"
                 value={productUrl}
                 onChange={(e) => setProductUrl(e.target.value)}
-                placeholder="https://www.idealo.de/preisvergleich/..."
+                placeholder="https://www.amazon.de/preisvergleich/..."
                 className="flex-1"
                 disabled={extractMutation.isPending}
                 onKeyDown={(e) => {
@@ -137,7 +137,7 @@ export default function IdealoModal({ isOpen, onClose, onSelectProduct }: Idealo
               </Button>
             </div>
             <p className="text-xs text-gray-500 mt-2">
-              Insert a product URL from idealo.de to automatically create suitable product information for your inventory.
+              Insert a product URL from Amazon to automatically create suitable product information for your inventory.
             </p>
           </div>
         </div>

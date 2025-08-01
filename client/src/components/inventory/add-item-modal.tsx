@@ -4,7 +4,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertInventoryItemSchema } from "@shared/schema";
@@ -17,6 +16,8 @@ import { useState, useRef } from "react";
 import type { Category } from "@shared/schema";
 import GoogleShoppingModal from "./google-shopping-modal";
 import IdealoModal from "./idealo-modal";
+import AmazonModal from "./amazon-modal";
+import PurchaseInfoFields from "./purchase-info-fields";
 
 interface AddItemModalProps {
   isOpen: boolean;
@@ -26,12 +27,10 @@ interface AddItemModalProps {
 
 export default function AddItemModal({ isOpen, onClose, categories }: AddItemModalProps) {
   const { toast } = useToast();
-  const [isPurchasable, setIsPurchasable] = useState(false);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
-  const [totalCost, setTotalCost] = useState<string>("");
-  const [quantity, setQuantity] = useState<string>("1");
   const [showGoogleShopping, setShowGoogleShopping] = useState(false);
   const [showIdealoModal, setShowIdealoModal] = useState(false);
+  const [showAmazonModal, setShowAmazonModal] = useState(false);
   const [isDownloadingImage, setIsDownloadingImage] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -43,10 +42,12 @@ export default function AddItemModal({ isOpen, onClose, categories }: AddItemMod
       description: "",
       categoryId: "",
       location: "",
-      purchaseDate: new Date(),
+      purchaseDate: "",
       imageUrl: "",
+      externalLink: "",
       isPurchasable: false,
-      price: 0,
+      purchasePrice: 0,
+      pricePerUnit: 0,
       stockQuantity: 1,
     },
   });
@@ -55,18 +56,18 @@ export default function AddItemModal({ isOpen, onClose, categories }: AddItemMod
     mutationFn: async (data: any) => {
       // First create the item
       const response = await apiRequest("POST", "/api/inventory", data);
-      
+
       // Then upload image if one was selected
       if (uploadedImage && fileInputRef.current?.files?.[0]) {
         const formData = new FormData();
         formData.append('image', fileInputRef.current.files[0]);
-        
+
         await fetch(`/api/inventory/${response.id}/upload-image`, {
           method: 'POST',
           body: formData,
         });
       }
-      
+
       return response;
     },
     onSuccess: () => {
@@ -79,10 +80,7 @@ export default function AddItemModal({ isOpen, onClose, categories }: AddItemMod
       onClose();
       form.reset();
       setUploadedImage(null);
-      setIsPurchasable(false);
-      setTotalCost("");
-      setQuantity("1");
-
+      form.setValue("isPurchasable", false);
     },
     onError: (error: Error) => {
       if (isUnauthorizedError(error)) {
@@ -115,7 +113,7 @@ export default function AddItemModal({ isOpen, onClose, categories }: AddItemMod
         });
         return;
       }
-      
+
       if (!file.type.startsWith('image/')) {
         toast({
           title: "Invalid file type",
@@ -124,47 +122,21 @@ export default function AddItemModal({ isOpen, onClose, categories }: AddItemMod
         });
         return;
       }
-      
+
       // Create preview URL
       const previewUrl = URL.createObjectURL(file);
       setUploadedImage(previewUrl);
     }
   };
 
-  // Calculate price per unit when total cost or quantity changes
-  const calculatePricePerUnit = () => {
-    const cost = parseFloat(totalCost) || 0;
-    const qty = parseFloat(quantity) || 1;
-    if (qty > 0) {
-      const pricePerUnit = cost / qty;
-      form.setValue('price', parseFloat(pricePerUnit.toFixed(2)));
-    }
-  };
-
-  // Update calculations when values change
-  const handleTotalCostChange = (value: string) => {
-    setTotalCost(value);
-    setTimeout(calculatePricePerUnit, 0);
-  };
-
-  const handleQuantityChange = (value: string) => {
-    setQuantity(value);
-    const qty = parseFloat(value) || 1;
-    // Set stock quantity to entered quantity if not already set
-    if (!form.getValues('stockQuantity') || form.getValues('stockQuantity') === 1) {
-      form.setValue('stockQuantity', qty);
-    }
-    setTimeout(calculatePricePerUnit, 0);
-  };
-
   const downloadImageFromUrl = async (imageUrl: string) => {
     try {
       setIsDownloadingImage(true);
-      
+
       const response = await apiRequest('POST', '/api/download-image', {
         imageUrl: imageUrl
       });
-      
+
       if (response.success && response.localPath) {
         form.setValue("imageUrl", response.localPath);
         setUploadedImage(response.localPath);
@@ -191,7 +163,7 @@ export default function AddItemModal({ isOpen, onClose, categories }: AddItemMod
 
   const handleImageUrlChange = async (imageUrl: string) => {
     form.setValue("imageUrl", imageUrl);
-    
+
     // Check if it's a valid URL and try to download it
     if (imageUrl && (imageUrl.startsWith('http://') || imageUrl.startsWith('https://'))) {
       const localPath = await downloadImageFromUrl(imageUrl);
@@ -200,22 +172,27 @@ export default function AddItemModal({ isOpen, onClose, categories }: AddItemMod
         return;
       }
     }
-    
+
     // If not a URL or download failed, just use the URL as is
     setUploadedImage(imageUrl);
+  };
+
+  const handleExternalLinkChange = (externalLink: string) => {
+    const cleanUrl = externalLink.split('?')[0];
+    form.setValue("externalLink", cleanUrl);
   };
 
   const handleGoogleShoppingSelect = async (item: any) => {
     try {
       // First, try to get detailed product information from API
       let productDescription = "";
-      
+
       if (item.link) {
         try {
           const detailResponse = await apiRequest('POST', '/api/get-product-details', {
             productLink: item.link
           });
-          
+
           if (detailResponse.description) {
             productDescription = detailResponse.description;
           }
@@ -223,12 +200,12 @@ export default function AddItemModal({ isOpen, onClose, categories }: AddItemMod
           console.log('Could not fetch detailed product info, using basic data');
         }
       }
-      
+
       // Set item name
       if (item.title) {
         form.setValue("name", item.title);
       }
-      
+
       // Set description - prefer API description, otherwise fallback to source info
       if (productDescription) {
         form.setValue("description", productDescription);
@@ -247,23 +224,21 @@ export default function AddItemModal({ isOpen, onClose, categories }: AddItemMod
         }
         form.setValue("description", description);
       }
-      
+
       // Set price for purchasable items
       if (item.price) {
         const priceValue = parseFloat(item.price.replace(/[^\d.,]/g, '').replace(',', '.'));
         if (!isNaN(priceValue)) {
-          setIsPurchasable(true);
-          setTotalCost(priceValue.toString());
-          handleTotalCostChange(priceValue.toString());
+          form.setValue('purchasePrice', priceValue);
         }
       }
-      
+
       // Set image from thumbnail - only set URL, don't trigger download
       if (item.thumbnail) {
         form.setValue("imageUrl", item.thumbnail);
         setUploadedImage(item.thumbnail);
       }
-      
+
       setShowGoogleShopping(false);
     } catch (error) {
       console.error('Error processing Google Shopping selection:', error);
@@ -280,11 +255,11 @@ export default function AddItemModal({ isOpen, onClose, categories }: AddItemMod
     if (product.name) {
       form.setValue("name", product.name);
     }
-    
+
     if (product.description) {
       form.setValue("description", product.description);
     }
-    
+
     // Set category - find matching category ID
     if (product.category) {
       const matchingCategory = categories?.find(cat => cat.name === product.category);
@@ -292,40 +267,79 @@ export default function AddItemModal({ isOpen, onClose, categories }: AddItemMod
         form.setValue("categoryId", matchingCategory.id);
       }
     }
-    
+
+    // Set stockQuantity
+    if (product.quantity) {
+      // setStockQuantity(product.quantity.toString());
+      form.setValue('stockQuantity', product.quantity);
+    }
+
     // Set price for purchasable items
     if (product.price) {
       const priceValue = parseFloat(product.price.replace(/[^\d.,]/g, '').replace(',', '.'));
       if (!isNaN(priceValue)) {
-        setIsPurchasable(true);
-        setTotalCost(priceValue.toString());
-        handleTotalCostChange(priceValue.toString());
+        form.setValue('purchasePrice', priceValue);
       }
     }
-    
-    // Set quantity
-    if (product.quantity) {
-      setQuantity(product.quantity.toString());
-      form.setValue('stockQuantity', product.quantity);
-    }
-    
+
     // Set image from URL - only set URL, don't trigger download
     if (product.image) {
       form.setValue("imageUrl", product.image);
       setUploadedImage(product.image);
     }
-    
+
     setShowIdealoModal(false);
   };
 
+  const handleAmazonSelect = async (product: any) => {
+    // Set product data from Amazon extraction
+    if (product.name) {
+      form.setValue("name", product.name);
+    }
+
+    if (product.description) {
+      form.setValue("description", product.description);
+    }
+
+    // Set category - find matching category ID
+    if (product.category) {
+      const matchingCategory = categories?.find(cat => cat.name === product.category);
+      if (matchingCategory) {
+        form.setValue("categoryId", matchingCategory.id);
+      }
+    }
+
+    // Set stockQuantity
+    if (product.quantity) {
+      form.setValue('stockQuantity', product.quantity);
+    }
+
+    // Set price for purchasable items
+    if (product.price) {
+      const priceValue = parseFloat(product.price.replace(/[^\d.,]/g, '').replace(',', '.'));
+      if (!isNaN(priceValue)) {
+        form.setValue('purchasePrice', priceValue);
+      }
+    }
+
+    // Set image from URL - only set URL, don't trigger download
+    if (product.image) {
+      form.setValue("imageUrl", product.image);
+      setUploadedImage(product.image);
+    }
+
+    // Set external link
+    if (product.url) {
+      handleExternalLinkChange(product.url);
+    }
+
+    setShowAmazonModal(false);
+  };
 
 
   const onSubmit = (data: any) => {
     const formattedData = {
       ...data,
-      isPurchasable,
-      pricePerUnit: isPurchasable ? data.pricePerUnit : null,
-      stockQuantity: isPurchasable ? data.stockQuantity : 1,
     };
     createMutation.mutate(formattedData);
   };
@@ -354,9 +368,18 @@ export default function AddItemModal({ isOpen, onClose, categories }: AddItemMod
             >
               🔗 Add Idealo Item
             </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setShowAmazonModal(true)}
+              className="flex items-center gap-2"
+            >
+              🔗 Add Amazon Item
+            </Button>
           </div>
         </DialogHeader>
-        
+
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -373,11 +396,11 @@ export default function AddItemModal({ isOpen, onClose, categories }: AddItemMod
                 </p>
               )}
             </div>
-            
+
             <div>
               <Label htmlFor="categoryId">Category</Label>
-              <Select 
-                value={form.watch("categoryId")} 
+              <Select
+                value={form.watch("categoryId")}
                 onValueChange={(value) => form.setValue("categoryId", value)}
               >
                 <SelectTrigger className="mt-1">
@@ -386,7 +409,7 @@ export default function AddItemModal({ isOpen, onClose, categories }: AddItemMod
                 <SelectContent>
                   {categories.map((category) => (
                     <SelectItem key={category.id} value={category.id}>
-                      {category.name}
+                      {category.name} ({category.description})
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -425,15 +448,13 @@ export default function AddItemModal({ isOpen, onClose, categories }: AddItemMod
                 </p>
               )}
             </div>
-            
+
             <div>
               <Label htmlFor="purchaseDate">Purchase Date</Label>
               <Input
                 id="purchaseDate"
                 type="date"
-                {...form.register("purchaseDate", {
-                  setValueAs: (value) => new Date(value),
-                })}
+                {...form.register("purchaseDate")}
                 className="mt-1"
               />
               {form.formState.errors.purchaseDate && (
@@ -451,10 +472,10 @@ export default function AddItemModal({ isOpen, onClose, categories }: AddItemMod
               <div className="mt-2 flex items-start space-x-4">
                 <div className="w-32 h-32 border-2 border-dashed border-border rounded-lg overflow-hidden bg-muted flex items-center justify-center">
                   {uploadedImage ? (
-                    <img 
-                      src={uploadedImage} 
-                      alt="Preview" 
-                      className="w-full h-full object-cover"
+                    <img
+                      src={uploadedImage}
+                      alt="Preview"
+                      className="w-full h-full object-contain"
                     />
                   ) : (
                     <div className="text-center text-muted-foreground">
@@ -499,7 +520,7 @@ export default function AddItemModal({ isOpen, onClose, categories }: AddItemMod
                 className="hidden"
               />
             </div>
-            
+
             <div>
               <Label htmlFor="imageUrl">Or Image URL (automatic download)</Label>
               <div className="flex gap-2">
@@ -521,108 +542,29 @@ export default function AddItemModal({ isOpen, onClose, categories }: AddItemMod
                 URLs werden automatisch heruntergeladen und lokal gespeichert
               </p>
             </div>
-          </div>
 
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="purchasable"
-              checked={isPurchasable}
-              onCheckedChange={setIsPurchasable}
-            />
-            <Label htmlFor="purchasable" className="text-sm">
-              Mark as purchasable item
-            </Label>
-          </div>
-
-          {isPurchasable && (
-            <div className="space-y-6 p-4 bg-gray-50 rounded-lg">
-              <h4 className="font-medium text-gray-900">Purchase Information</h4>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <Label htmlFor="totalCost">Total Purchase Cost (€)</Label>
-                  <Input
-                    id="totalCost"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={totalCost}
-                    onChange={(e) => handleTotalCostChange(e.target.value)}
-                    placeholder="0.00"
-                    className="mt-1"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    What you paid in total for this purchase
-                  </p>
-                </div>
-                
-                <div>
-                  <Label htmlFor="purchaseQuantity">Purchase Quantity</Label>
-                  <Input
-                    id="purchaseQuantity"
-                    type="number"
-                    min="1"
-                    value={quantity}
-                    onChange={(e) => setQuantity(e.target.value)}
-                    onBlur={(e) => handleQuantityChange(e.target.value)}
-                    placeholder="1"
-                    className="mt-1"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    How many units you purchased
-                  </p>
-                </div>
+            <div>
+              <Label htmlFor="externalLink">Product URL</Label>
+              <div>
+                <Input
+                  id="externalLink"
+                  {...form.register("externalLink")}
+                  placeholder="https://amazon.de/product/1234567890"
+                  onChange={(e) => handleExternalLinkChange(e.target.value)}
+                  className="mt-1"
+                />
               </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <Label htmlFor="price">Price per Unit (€)</Label>
-                  <Input
-                    id="price"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    {...form.register("price", {
-                      valueAsNumber: true,
-                    })}
-                    placeholder="0.00"
-                    className="mt-1 bg-gray-100"
-                    readOnly
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Automatically calculated from total cost ÷ quantity
+              {form.formState.errors.externalLink && (
+                  <p className="text-sm text-red-600 mt-1">
+                    {form.formState.errors.externalLink.message}
                   </p>
-                  {form.formState.errors.price && (
-                    <p className="text-sm text-red-600 mt-1">
-                      {form.formState.errors.price.message}
-                    </p>
-                  )}
-                </div>
-                
-                <div>
-                  <Label htmlFor="stockQuantity">Initial Stock Quantity</Label>
-                  <Input
-                    id="stockQuantity"
-                    type="number"
-                    min="0"
-                    {...form.register("stockQuantity", {
-                      valueAsNumber: true,
-                    })}
-                    placeholder="Will default to purchase quantity"
-                    className="mt-1"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Defaults to purchase quantity if not set
-                  </p>
-                  {form.formState.errors.stockQuantity && (
-                    <p className="text-sm text-red-600 mt-1">
-                      {form.formState.errors.stockQuantity.message}
-                    </p>
-                  )}
-                </div>
-              </div>
+              )}
             </div>
-          )}
+          </div>
+
+          <PurchaseInfoFields
+              form={form}
+          />
 
           <div className="flex justify-end space-x-4 pt-4 border-t">
             <Button type="button" variant="outline" onClick={onClose}>
@@ -633,7 +575,7 @@ export default function AddItemModal({ isOpen, onClose, categories }: AddItemMod
             </Button>
           </div>
         </form>
-        
+
         <GoogleShoppingModal
           isOpen={showGoogleShopping}
           onClose={() => setShowGoogleShopping(false)}
@@ -644,6 +586,12 @@ export default function AddItemModal({ isOpen, onClose, categories }: AddItemMod
           isOpen={showIdealoModal}
           onClose={() => setShowIdealoModal(false)}
           onSelectProduct={handleIdealoSelect}
+        />
+
+        <AmazonModal
+          isOpen={showAmazonModal}
+          onClose={() => setShowAmazonModal(false)}
+          onSelectProduct={handleAmazonSelect}
         />
 
       </DialogContent>

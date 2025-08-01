@@ -8,19 +8,19 @@ import { sendUserRegistrationNotification } from "./emailService";
 export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
   const pgStore = connectPg(session);
-  
+
   // Check if we're using Neon vs regular PostgreSQL
-  const isNeonDatabase = process.env.DATABASE_URL?.includes('wss://') || 
+  const isNeonDatabase = process.env.DATABASE_URL?.includes('wss://') ||
                          process.env.DATABASE_URL?.includes('neon.tech') ||
                          process.env.DATABASE_URL?.includes('pooler.neon');
-  
+
   const sessionStore = new pgStore({
     conString: process.env.DATABASE_URL,
     createTableIfMissing: false,
     ttl: sessionTtl,
     tableName: "sessions"
   });
-  
+
   return session({
     secret: process.env.SESSION_SECRET!,
     store: sessionStore,
@@ -41,9 +41,9 @@ export async function setupAuth(app: Express) {
   // Login endpoint
   app.post("/api/login", async (req, res) => {
     const { username, password } = req.body;
-    
+
     console.log(`Login attempt for username: ${username}`);
-    
+
     if (!username || !password) {
       console.log("Missing username or password");
       return res.status(400).json({ message: "Username and password are required" });
@@ -57,10 +57,10 @@ export async function setupAuth(app: Express) {
       }
 
       console.log(`User found: ${user.id}, checking password...`);
-      
+
       const isValidPassword = await bcrypt.compare(password, user.passwordHash);
       console.log(`Password valid: ${isValidPassword}`);
-      
+
       if (!isValidPassword) {
         console.log("Invalid password");
         return res.status(401).json({ message: "Invalid username or password" });
@@ -83,9 +83,9 @@ export async function setupAuth(app: Express) {
       };
 
       console.log(`Login successful for ${username}`);
-      
-      res.json({ 
-        success: true, 
+
+      res.json({
+        success: true,
         user: {
           id: user.id,
           username: user.username,
@@ -120,7 +120,7 @@ export async function setupAuth(app: Express) {
   app.post("/api/register", async (req, res) => {
     try {
       const { username, password, email, firstName, lastName, phone } = req.body;
-      
+
       if (!username || !password) {
         return res.status(400).json({ message: "Username and password are required" });
       }
@@ -151,7 +151,7 @@ export async function setupAuth(app: Express) {
         const adminEmails = allAdmins
           .map(admin => admin.email)
           .filter(email => email !== null && email !== '') as string[];
-        
+
         if (adminEmails.length > 0) {
           await sendUserRegistrationNotification({
             username: newUser.username,
@@ -173,8 +173,8 @@ export async function setupAuth(app: Express) {
         // Don't fail the registration process if email fails
       }
 
-      res.json({ 
-        success: true, 
+      res.json({
+        success: true,
         message: "Registrierung erfolgreich. Warten auf Admin-Freischaltung.",
         user: {
           id: newUser.id,
@@ -204,10 +204,10 @@ export async function setupAuth(app: Express) {
       }
 
       const updatedUser = await storage.updateUserRole(req.params.id, role);
-      res.json({ 
-        success: true, 
+      res.json({
+        success: true,
         user: updatedUser,
-        message: "Benutzer erfolgreich freigeschaltet" 
+        message: "Benutzer erfolgreich freigeschaltet"
       });
     } catch (error) {
       console.error("User activation error:", error);
@@ -220,17 +220,17 @@ export async function setupAuth(app: Express) {
     try {
       const currentUser = (req.session as any).user;
       const { firstName, lastName, email } = req.body;
-      
+
       const updatedUser = await storage.updateUserProfile(currentUser.id, {
         firstName: firstName || null,
         lastName: lastName || null,
         email: email || null,
       });
-      
-      res.json({ 
-        success: true, 
+
+      res.json({
+        success: true,
         user: updatedUser,
-        message: "Profil erfolgreich aktualisiert" 
+        message: "Profil erfolgreich aktualisiert"
       });
     } catch (error) {
       console.error("Profile update error:", error);
@@ -242,7 +242,7 @@ export async function setupAuth(app: Express) {
     try {
       const currentUser = (req.session as any).user;
       const { currentPassword, newPassword } = req.body;
-      
+
       if (!currentPassword || !newPassword) {
         return res.status(400).json({ message: "Aktuelles und neues Passwort sind erforderlich" });
       }
@@ -261,13 +261,13 @@ export async function setupAuth(app: Express) {
 
       // Hash new password
       const newPasswordHash = await bcrypt.hash(newPassword, 10);
-      
+
       // Update password
       await storage.updateUserPassword(currentUser.id, newPasswordHash);
-      
-      res.json({ 
+
+      res.json({
         success: true,
-        message: "Passwort erfolgreich geändert" 
+        message: "Passwort erfolgreich geändert"
       });
     } catch (error) {
       console.error("Password change error:", error);
@@ -278,7 +278,7 @@ export async function setupAuth(app: Express) {
   app.delete("/api/profile", isAuthenticated, async (req, res) => {
     try {
       const currentUser = (req.session as any).user;
-      
+
       // Don't allow deleting the last admin
       if (currentUser.role === 'admin') {
         const allAdmins = await storage.getUsersByRole('admin');
@@ -286,49 +286,30 @@ export async function setupAuth(app: Express) {
           return res.status(400).json({ message: "Der letzte Administrator kann nicht gelöscht werden" });
         }
       }
-      
+
       await storage.deleteUser(currentUser.id);
-      
+
       // Destroy session
       req.session.destroy((err) => {
         if (err) {
           console.error("Session destruction error:", err);
         }
       });
-      
-      res.json({ 
+
+      res.json({
         success: true,
-        message: "Konto erfolgreich gelöscht" 
+        message: "Konto erfolgreich gelöscht"
       });
     } catch (error) {
       console.error("Account deletion error:", error);
       res.status(500).json({ message: "Konto-Löschung fehlgeschlagen" });
     }
   });
-
-  // Create default admin user if none exists
-  try {
-    const adminUser = await storage.getUserByUsername('admin');
-    if (!adminUser) {
-      const passwordHash = await bcrypt.hash('admin123', 10);
-      await storage.createUser({
-        username: 'admin',
-        passwordHash,
-        email: 'admin@werkstatt.de',
-        firstName: 'Workshop',
-        lastName: 'Administrator',
-        role: 'admin',
-      });
-      console.log('Default admin user created: admin / admin123');
-    }
-  } catch (error) {
-    console.error('Error creating default admin user:', error);
-  }
 }
 
 export const isAuthenticated: RequestHandler = (req, res, next) => {
   const user = (req.session as any)?.user;
-  
+
   if (!user) {
     return res.status(401).json({ message: "Nicht authentifiziert" });
   }

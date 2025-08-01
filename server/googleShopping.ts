@@ -1,6 +1,8 @@
 import { getJson } from 'serpapi';
 
-const SERPAPI_KEY = 'ba3f10987420a0760ae1552caf8b1a77c4ea5e8c68a64905e38cf620ae5e1d47';
+if (!process.env.SERPAPI_API_KEY) {
+  throw new Error("SERPAPI_API_KEY environment variable must be set");
+}
 
 export interface GoogleShoppingItem {
   title: string;
@@ -17,7 +19,7 @@ export interface GoogleShoppingItem {
 export async function getProductDetails(productId: string): Promise<any> {
   try {
     const searchParams = {
-      api_key: SERPAPI_KEY,
+      api_key: process.env.SERPAPI_API_KEY,
       engine: "google_product",
       product_id: productId,
       location: "Germany",
@@ -29,7 +31,7 @@ export async function getProductDetails(productId: string): Promise<any> {
     console.log('SerpAPI Product Details Params:', searchParams);
     const response = await getJson(searchParams);
     console.log('SerpAPI Product Details Response:', JSON.stringify(response, null, 2));
-    
+
     return {
       title: response.product_results?.title || '',
       description: response.product_results?.description || '',
@@ -49,7 +51,7 @@ export async function getProductDetails(productId: string): Promise<any> {
 export async function searchGoogleShopping(query: string): Promise<GoogleShoppingItem[]> {
   try {
     const searchParams = {
-      api_key: SERPAPI_KEY,
+      api_key: process.env.SERPAPI_API_KEY,
       engine: "google",
       q: query,
       location: "Germany",
@@ -63,7 +65,7 @@ export async function searchGoogleShopping(query: string): Promise<GoogleShoppin
     console.log('SerpAPI Search Params:', searchParams);
     const response = await getJson(searchParams);
     console.log('SerpAPI Response:', JSON.stringify(response, null, 2));
-    
+
     if (!response.shopping_results || !Array.isArray(response.shopping_results)) {
       console.log('No shopping results found or invalid format');
       return [];
@@ -80,7 +82,7 @@ export async function searchGoogleShopping(query: string): Promise<GoogleShoppin
       reviews: item.reviews ? parseInt(item.reviews.toString().replace(/[^\d]/g, '')) : undefined,
       description: item.snippet || item.description || undefined
     }));
-    
+
     console.log('Mapped results:', mappedResults);
     return mappedResults;
 
