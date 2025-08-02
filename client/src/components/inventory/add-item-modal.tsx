@@ -14,10 +14,10 @@ import { isUnauthorizedError } from "@/lib/authUtils";
 import { useState, useRef } from "react";
 
 import type { Category } from "@shared/schema";
-import GoogleShoppingModal from "./google-shopping-modal";
-import IdealoModal from "./idealo-modal";
+import ProductImportModal from "./product-import-modal.tsx";
 import AmazonModal from "./amazon-modal";
 import PurchaseInfoFields from "./purchase-info-fields";
+import {ImageDownloadResult} from "../../../../server/imageDownloader.ts";
 
 interface AddItemModalProps {
   isOpen: boolean;
@@ -28,8 +28,7 @@ interface AddItemModalProps {
 export default function AddItemModal({ isOpen, onClose, categories }: AddItemModalProps) {
   const { toast } = useToast();
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
-  const [showGoogleShopping, setShowGoogleShopping] = useState(false);
-  const [showIdealoModal, setShowIdealoModal] = useState(false);
+  const [showProductImport, setShowProductImport] = useState(false);
   const [showAmazonModal, setShowAmazonModal] = useState(false);
   const [isDownloadingImage, setIsDownloadingImage] = useState(false);
 
@@ -135,7 +134,7 @@ export default function AddItemModal({ isOpen, onClose, categories }: AddItemMod
 
       const response = await apiRequest('POST', '/api/download-image', {
         imageUrl: imageUrl
-      });
+      }).then(res => res.json()) as ImageDownloadResult;
 
       if (response.success && response.localPath) {
         form.setValue("imageUrl", response.localPath);
@@ -182,116 +181,8 @@ export default function AddItemModal({ isOpen, onClose, categories }: AddItemMod
     form.setValue("externalLink", cleanUrl);
   };
 
-  const handleGoogleShoppingSelect = async (item: any) => {
-    try {
-      // First, try to get detailed product information from API
-      let productDescription = "";
-
-      if (item.link) {
-        try {
-          const detailResponse = await apiRequest('POST', '/api/get-product-details', {
-            productLink: item.link
-          });
-
-          if (detailResponse.description) {
-            productDescription = detailResponse.description;
-          }
-        } catch (error) {
-          console.log('Could not fetch detailed product info, using basic data');
-        }
-      }
-
-      // Set item name
-      if (item.title) {
-        form.setValue("name", item.title);
-      }
-
-      // Set description - prefer API description, otherwise fallback to source info
-      if (productDescription) {
-        form.setValue("description", productDescription);
-      } else if (item.description) {
-        form.setValue("description", item.description);
-      } else {
-        let description = `Gefunden in: ${item.source || 'Unbekannter Shop'}`;
-        if (item.price) {
-          description += `\nPreis: ${item.price}`;
-        }
-        if (item.rating) {
-          description += `\nBewertung: ${item.rating}/5`;
-          if (item.reviews) {
-            description += ` (${item.reviews} Bewertungen)`;
-          }
-        }
-        form.setValue("description", description);
-      }
-
-      // Set price for purchasable items
-      if (item.price) {
-        const priceValue = parseFloat(item.price.replace(/[^\d.,]/g, '').replace(',', '.'));
-        if (!isNaN(priceValue)) {
-          form.setValue('purchasePrice', priceValue);
-        }
-      }
-
-      // Set image from thumbnail - only set URL, don't trigger download
-      if (item.thumbnail) {
-        form.setValue("imageUrl", item.thumbnail);
-        setUploadedImage(item.thumbnail);
-      }
-
-      setShowGoogleShopping(false);
-    } catch (error) {
-      console.error('Error processing Google Shopping selection:', error);
-      toast({
-        title: "Fehler",
-        description: "Fehler beim Verarbeiten der Produktauswahl",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleIdealoSelect = async (product: any) => {
-    // Set product data from Idealo extraction
-    if (product.name) {
-      form.setValue("name", product.name);
-    }
-
-    if (product.description) {
-      form.setValue("description", product.description);
-    }
-
-    // Set category - find matching category ID
-    if (product.category) {
-      const matchingCategory = categories?.find(cat => cat.name === product.category);
-      if (matchingCategory) {
-        form.setValue("categoryId", matchingCategory.id);
-      }
-    }
-
-    // Set stockQuantity
-    if (product.quantity) {
-      // setStockQuantity(product.quantity.toString());
-      form.setValue('stockQuantity', product.quantity);
-    }
-
-    // Set price for purchasable items
-    if (product.price) {
-      const priceValue = parseFloat(product.price.replace(/[^\d.,]/g, '').replace(',', '.'));
-      if (!isNaN(priceValue)) {
-        form.setValue('purchasePrice', priceValue);
-      }
-    }
-
-    // Set image from URL - only set URL, don't trigger download
-    if (product.image) {
-      form.setValue("imageUrl", product.image);
-      setUploadedImage(product.image);
-    }
-
-    setShowIdealoModal(false);
-  };
-
-  const handleAmazonSelect = async (product: any) => {
+  const handleProductSelect = async (product: any) => {
+    console.log("handleProductSelect", product);
     // Set product data from Amazon extraction
     if (product.name) {
       form.setValue("name", product.name);
@@ -326,6 +217,7 @@ export default function AddItemModal({ isOpen, onClose, categories }: AddItemMod
     if (product.image) {
       form.setValue("imageUrl", product.image);
       setUploadedImage(product.image);
+      await downloadImageFromUrl(product.image);
     }
 
     // Set external link
@@ -354,19 +246,10 @@ export default function AddItemModal({ isOpen, onClose, categories }: AddItemMod
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => setShowGoogleShopping(true)}
+              onClick={() => setShowProductImport(true)}
               className="flex items-center gap-2"
             >
-              🛒 Add Google Item
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setShowIdealoModal(true)}
-              className="flex items-center gap-2"
-            >
-              🔗 Add Idealo Item
+              🛒 Add Item
             </Button>
             <Button
               type="button"
@@ -576,22 +459,16 @@ export default function AddItemModal({ isOpen, onClose, categories }: AddItemMod
           </div>
         </form>
 
-        <GoogleShoppingModal
-          isOpen={showGoogleShopping}
-          onClose={() => setShowGoogleShopping(false)}
-          onSelectItem={handleGoogleShoppingSelect}
-        />
-
-        <IdealoModal
-          isOpen={showIdealoModal}
-          onClose={() => setShowIdealoModal(false)}
-          onSelectProduct={handleIdealoSelect}
+        <ProductImportModal
+          isOpen={showProductImport}
+          onClose={() => setShowProductImport(false)}
+          onSelectProduct={handleProductSelect}
         />
 
         <AmazonModal
           isOpen={showAmazonModal}
           onClose={() => setShowAmazonModal(false)}
-          onSelectProduct={handleAmazonSelect}
+          onSelectProduct={handleProductSelect}
         />
 
       </DialogContent>

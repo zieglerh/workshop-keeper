@@ -137,6 +137,8 @@ Example for "Bosch Professional Cordless Drill GSR 12V-15":
 - category: "Tools - Power"
 - description: "The Bosch Professional GSR 12V-15 is a compact and powerful cordless drill, perfect for a wide range of drilling and screwdriving applications. It features a robust design and a long-lasting battery, making it ideal for professional use in workshops and construction sites."
 - image: "https://m.media-amazon.com/images/I/71K7Q4FpguL._AC_SX679_.jpg"
+- price: "29.99"
+- quantity: 1
 
 Respond only with valid JSON in this format:
 {
@@ -148,6 +150,8 @@ Respond only with valid JSON in this format:
   "quantity": number
 }
 `;
+
+    console.log(prompt);
 
     const response = await openai.chat.completions.create({
       model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user

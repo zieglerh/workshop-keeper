@@ -12,7 +12,13 @@ import type { Request, Response } from "express";
 import { upload, deleteUploadedFile } from "./upload";
 import { sendBorrowNotification, sendPurchaseNotification, sendUserRegistrationNotification } from "./emailService";
 import { downloadImageFromUrl, isValidImageUrl } from "./imageDownloader";
-import path from "path";
+
+interface DownloadImageResponse {
+  success: boolean;
+  localPath?: string;
+  message?: string;
+  error?: string;
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
@@ -341,20 +347,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Image download route
-  app.post("/api/download-image", isAuthenticated, async (req: any, res) => {
+  app.post("/api/download-image", isAuthenticated, async (req: any, res: Response<DownloadImageResponse>)=> {
     try {
       const currentUser = await storage.getUser(req.user.id);
       if (currentUser?.role !== 'admin') {
-        return res.status(403).json({ message: "Admin access required" });
+        return res.status(403).json({
+          success: false,
+          error: "Admin access required"
+        });
+
       }
 
       const { imageUrl } = req.body;
       if (!imageUrl) {
-        return res.status(400).json({ message: "Image URL is required" });
+        return res.status(400).json({
+          success: false,
+          error: "Image URL is required"
+        });
+
       }
 
       if (!isValidImageUrl(imageUrl)) {
-        return res.status(400).json({ message: "Invalid image URL" });
+        return res.status(400).json({
+          success: false,
+          error: "Invalid image URL"
+        });
+
       }
 
       console.log('Downloading image from URL:', imageUrl);
@@ -374,35 +392,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     } catch (error) {
       console.error("Error in image download:", error);
-      res.status(500).json({ message: "Failed to download image" });
+      res.status(500).json({
+        success: false,
+        error: "Failed to download image"
+      });
+
     }
   });
 
-  // Google Shopping search route
-  app.post("/api/search-google-shopping", isAuthenticated, async (req: Request & { user: any }, res: Response) => {
-    try {
-      const currentUser = await storage.getUser(req.user.id);
-      if (currentUser?.role !== 'admin') {
-        return res.status(403).json({ message: "Admin access required" });
-      }
-
-      const { query } = req.body;
-      if (!query) {
-        return res.status(400).json({ message: "Search query is required" });
-      }
-
-      const { searchGoogleShopping } = await import('./googleShopping');
-      const results = await searchGoogleShopping(query);
-
-      console.log('Sending results to frontend:', { results });
-      res.json({ results });
-    } catch (error) {
-      console.error("Error searching Google Shopping:", error);
-      res.status(500).json({ message: "Failed to search Google Shopping" });
-    }
-  });
-
-  // Google Shopping Product Details route
+  // Get product details for import
   app.post("/api/get-product-details", isAuthenticated, async (req: Request & { user: any }, res: Response) => {
     try {
       const currentUser = await storage.getUser(req.user.id);
@@ -410,46 +408,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
 
-      const { productId } = req.body;
-      if (!productId) {
-        return res.status(400).json({ message: "Product ID is required" });
+      const { productName } = req.body;
+      if (!productName) {
+        return res.status(400).json({ message: "Product is required" });
       }
 
-      const { getProductDetails } = await import('./googleShopping');
-      const details = await getProductDetails(productId);
+      const { getProductDetails } = await import('./productImport.ts');
+      const details = await getProductDetails(productName);
 
       console.log('Sending product details to frontend:', details);
       res.json(details);
     } catch (error) {
       console.error("Error fetching product details:", error);
       res.status(500).json({ message: "Failed to fetch product details" });
-    }
-  });
-
-  // Idealo Product Extraction route
-  app.post("/api/extract-idealo-product", isAuthenticated, async (req: Request & { user: any }, res: Response) => {
-    try {
-      const currentUser = await storage.getUser(req.user.id);
-      if (currentUser?.role !== 'admin') {
-        return res.status(403).json({ message: "Admin access required" });
-      }
-
-      const { productUrl } = req.body;
-      if (!productUrl) {
-        return res.status(400).json({ message: "Product URL is required" });
-      }
-
-      if (!productUrl.includes('idealo.de')) {
-        return res.status(400).json({ message: "URL must be from idealo.de" });
-      }
-
-      const { extractIdealoProduct } = await import('./idealoExtractor');
-      const result = await extractIdealoProduct(productUrl);
-
-      res.json(result);
-    } catch (error) {
-      console.error("Error extracting Idealo product:", error);
-      res.status(500).json({ message: error.message || "Failed to extract product from Idealo" });
     }
   });
 
