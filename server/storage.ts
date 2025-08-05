@@ -16,14 +16,12 @@ import {
   type Purchase,
   type InsertPurchase,
   type PurchaseWithRelations,
-  type BorrowingHistory,
-  type InsertBorrowingHistory,
   type BorrowingHistoryWithRelations,
   type NotificationTemplate,
   type InsertNotificationTemplate,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, isNull, sql } from "drizzle-orm";
+import {eq, desc, and, sql, asc} from "drizzle-orm";
 
 export interface IStorage {
   // User operations
@@ -228,7 +226,7 @@ export class DatabaseStorage implements IStorage {
       .from(inventoryItems)
       .leftJoin(categories, eq(inventoryItems.categoryId, categories.id))
       .leftJoin(users, eq(inventoryItems.currentBorrowerId, users.id))
-      .orderBy(desc(inventoryItems.purchaseDate))
+      .orderBy(asc(inventoryItems.name))
       .then(rows =>
         rows.map(row => ({
           ...row.inventory_items,

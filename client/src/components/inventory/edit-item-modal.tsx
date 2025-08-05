@@ -15,6 +15,8 @@ import { useEffect } from "react";
 import { format } from "date-fns";
 import type { InventoryItemWithRelations, Category } from "@shared/schema";
 import PurchaseInfoFields from "@/components/inventory/purchase-info-fields.tsx";
+import {ImageDownloadResult} from "../../../../server/imageDownloader.ts";
+import {DownloadIcon} from "lucide-react";
 
 interface EditItemModalProps {
   isOpen: boolean;
@@ -67,10 +69,40 @@ export default function EditItemModal({ isOpen, onClose, item }: EditItemModalPr
     }
   }, [isOpen, item, form]);
 
+  const imageUrl = form.watch("imageUrl");
+
   const handleExternalLinkChange = (externalLink: string) => {
     const cleanUrl = externalLink.split('?')[0];
     form.setValue("externalLink", cleanUrl);
   };
+
+  const handleImageDownload = async () => {
+    try {
+      const response = await apiRequest('POST', '/api/download-image', {
+        imageUrl: imageUrl
+      }).then(res => res.json()) as ImageDownloadResult;
+
+      if (response.success && response.localPath) {
+        form.setValue("imageUrl", response.localPath);
+        toast({
+          title: "Bild heruntergeladen",
+          description: "Das Bild wurde erfolgreich lokal gespeichert.",
+        });
+        return response.localPath;
+      } else {
+        throw new Error(response.error || "Download failed");
+      }
+    } catch (error: any) {
+      console.error("Error downloading image:", error);
+      toast({
+        title: "Bild-Download fehlgeschlagen",
+        description: error.message || "Das Bild konnte nicht heruntergeladen werden.",
+        variant: "destructive",
+      });
+      return null;
+    } finally {
+    }
+  }
 
   const updateMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -209,12 +241,18 @@ export default function EditItemModal({ isOpen, onClose, item }: EditItemModalPr
 
           <div>
             <Label htmlFor="imageUrl">Image URL (optional)</Label>
-            <Input
-              id="imageUrl"
-              {...form.register("imageUrl")}
-              placeholder="https://example.com/image.jpg"
-              className="mt-1"
-            />
+            <div className="grid grid-cols-[1fr_auto] gap-2 items-start mt-1">
+              <Input
+                  id="imageUrl"
+                  {...form.register("imageUrl")}
+                  placeholder="https://example.com/image.jpg"
+              />
+              {!imageUrl.startsWith('/uploads/') && (
+                  <Button type="button" size="sm" className="min-w-10" variant="outline" onClick={() => handleImageDownload()}>
+                    <DownloadIcon className="h-3 w-3" />
+                  </Button>
+              )}
+            </div>
           </div>
 
           <div>
