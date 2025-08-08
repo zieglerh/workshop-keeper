@@ -1,5 +1,12 @@
 import nodemailer from 'nodemailer';
-import type { User } from '@shared/schema';
+
+if (!process.env.EMAIL_USER) {
+  throw new Error("EMAIL_USER environment variable must be set");
+}
+
+if (!process.env.EMAIL_PW) {
+  throw new Error("EMAIL_PW environment variable must be set");
+}
 
 // SMTP configuration for united-domains.de
 const transporter = nodemailer.createTransport({
@@ -7,8 +14,8 @@ const transporter = nodemailer.createTransport({
   port: 587,
   secure: false, // true for 465, false for other ports
   auth: {
-    user: 'workshop@intertwinet.de',
-    pass: 'mzn9yuz3brk9QZP!dfj'
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PW
   },
   tls: {
     // Do not fail on invalid certs
@@ -35,17 +42,17 @@ interface BorrowNotificationParams {
 
 export async function sendBorrowNotification(params: BorrowNotificationParams): Promise<boolean> {
   const { itemName, borrowerName, borrowerEmail, borrowDate, adminEmails } = params;
-  
+
   // Filter out empty email addresses
   const validAdminEmails = adminEmails.filter(email => email && email.trim() !== '');
-  
+
   if (validAdminEmails.length === 0) {
     console.log('No valid admin email addresses found, skipping notification');
     return false;
   }
 
   const subject = `Workshop Alert: Item Borrowed - ${itemName}`;
-  
+
   const htmlContent = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
@@ -104,7 +111,7 @@ This message was sent automatically by the Workshop Inventory System.
 
   try {
     const info = await transporter.sendMail({
-      from: '"Workshop System" <workshop@intertwinet.de>',
+      from: '"Workshop System" <' + process.env.EMAIL_USER + '>',
       to: validAdminEmails.join(', '),
       subject: subject,
       text: textContent,
@@ -131,17 +138,17 @@ interface PurchaseNotificationParams {
 
 export async function sendPurchaseNotification(params: PurchaseNotificationParams): Promise<boolean> {
   const { itemName, buyerName, buyerEmail, quantity, totalPrice, purchaseDate, adminEmails } = params;
-  
+
   // Filter out empty email addresses
   const validAdminEmails = adminEmails.filter(email => email && email.trim() !== '');
-  
+
   if (validAdminEmails.length === 0) {
     console.log('No valid admin email addresses found, skipping purchase notification');
     return false;
   }
 
   const subject = `Workshop Alert: Item Purchased - ${itemName}`;
-  
+
   const htmlContent = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <div style="background-color: #f0fdf4; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
@@ -210,7 +217,7 @@ This message was sent automatically by the Workshop Inventory System.
 
   try {
     const info = await transporter.sendMail({
-      from: '"Workshop System" <workshop@intertwinet.de>',
+      from: '"Workshop System" <' + process.env.EMAIL_USER + '>',
       to: validAdminEmails.join(', '),
       subject: subject,
       text: textContent,
@@ -236,10 +243,10 @@ interface UserRegistrationNotificationParams {
 
 export async function sendUserRegistrationNotification(params: UserRegistrationNotificationParams): Promise<boolean> {
   const { username, firstName, lastName, email, registrationDate, adminEmails } = params;
-  
+
   // Filter out empty email addresses
   const validAdminEmails = adminEmails.filter(email => email && email.trim() !== '');
-  
+
   if (validAdminEmails.length === 0) {
     console.log('No valid admin email addresses found, skipping registration notification');
     return false;
@@ -247,7 +254,7 @@ export async function sendUserRegistrationNotification(params: UserRegistrationN
 
   const fullName = firstName && lastName ? `${firstName} ${lastName}` : '';
   const subject = `Workshop Alert: New User Registration - ${username}`;
-  
+
   const htmlContent = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <div style="background-color: #eff6ff; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
@@ -312,7 +319,7 @@ This message was sent automatically by the Workshop Inventory System.
 
   try {
     const info = await transporter.sendMail({
-      from: '"Workshop System" <workshop@intertwinet.de>',
+      from: '"Workshop System" <' + process.env.EMAIL_USER + '>',
       to: validAdminEmails.join(', '),
       subject: subject,
       text: textContent,
