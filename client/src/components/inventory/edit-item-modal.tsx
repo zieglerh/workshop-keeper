@@ -72,7 +72,10 @@ export default function EditItemModal({ isOpen, onClose, item }: EditItemModalPr
   const imageUrl = form.watch("imageUrl");
 
   const handleExternalLinkChange = (externalLink: string) => {
-    const cleanUrl = externalLink.split('?')[0];
+    let cleanUrl = externalLink;
+    if (externalLink.includes('amazon.')) {
+      cleanUrl = externalLink.split('?')[0];
+    }
     form.setValue("externalLink", cleanUrl);
   };
 

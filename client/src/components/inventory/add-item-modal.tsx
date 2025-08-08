@@ -177,7 +177,10 @@ export default function AddItemModal({ isOpen, onClose, categories }: AddItemMod
   };
 
   const handleExternalLinkChange = (externalLink: string) => {
-    const cleanUrl = externalLink.split('?')[0];
+    let cleanUrl = externalLink;
+    if (externalLink.includes('amazon.')) {
+      cleanUrl = externalLink.split('?')[0];
+    }
     form.setValue("externalLink", cleanUrl);
   };
 
