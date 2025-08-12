@@ -40,7 +40,7 @@ Return the following structured fields:
 - name: Full product name in English
 - category: Best matching category from the list above (only the part before any parentheses)
 - description: Realistic product description (2–3 sentences)
-- image: First best-matching product image (from any source), minimum 300x300 px, as direct image URL. Validate that the image exists (not a broken or missing URL). Ensure the image clearly shows the correct product (check visual match to product name, type, and description). Do not use placeholder graphics, logos, icons, or unrelated images. 
+- image: First best-matching product image (from any source), minimum 200x200 px, as direct image URL. Validate that the image exists (not a broken or missing URL, short URL, not from Bing). Ensure the image clearly shows the correct product (check visual match to product name, type, and description). Do not use placeholder graphics, logos, icons, or unrelated images. 
 - price: Best current Euro price from Google product search, preferably from German shops or Amazon
 - priceSource: Name of the shop and direct link to product page
 - quantity: Default is 1 unless sold in packages
@@ -50,7 +50,7 @@ Example output for “Bosch Professional Cordless Drill GSR 12V-15”:
   "name": "Bosch Professional Cordless Drill GSR 12V-15",
   "category": "Tools - Power",
   "description": "The Bosch Professional GSR 12V-15 is a compact and powerful cordless drill, perfect for a wide range of drilling and screwdriving applications. It features a robust design and a long-lasting battery, making it ideal for professional use in workshops and construction sites.",
-  "image": "https://tse3.mm.bing.net/th/id/OIP.Zz0SN_ZGT2O7yeruadwGogHaFh",
+  "image": "https://m.media-amazon.com/images/I/31WbK-ROByL._AC_.jpg",
   "price": "29.99",
   "priceSource": "Amazon https://www.amazon.de/dp/B01MQNOPNK",
   "quantity": 1
